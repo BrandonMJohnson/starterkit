@@ -22,6 +22,16 @@ function renderApp() {
 describe('App', () => {
   it('runs the hello workflow and renders the result', async () => {
     const fetchMock = vi.fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            sessionId: 'anon-session-1',
+            actorKind: 'anonymous',
+            issuedAt: '2026-03-12T00:00:00Z',
+          }),
+          { status: 200 },
+        ),
+      )
       .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200 }))
       .mockResolvedValueOnce(
         new Response(
@@ -47,8 +57,9 @@ describe('App', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Run Hello Workflow' }))
 
     await waitFor(() => expect(screen.getByText('Hello from StarterKit.')).toBeTruthy())
-    expect(fetchMock).toHaveBeenCalledTimes(3)
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/workflows/hello-world/history?limit=8')
-    expect(fetchMock.mock.calls[1][0]).toBe('/api/workflows/hello-world/run')
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/session')
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/workflows/hello-world/history?limit=8')
+    expect(fetchMock.mock.calls[2][0]).toBe('/api/workflows/hello-world/run')
   })
 })

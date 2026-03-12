@@ -27,6 +27,12 @@ type HelloHistoryEntry = {
   createdAt: string
 }
 
+type AnonymousSession = {
+  sessionId: string
+  actorKind: string
+  issuedAt: string
+}
+
 const DEFAULT_USE_CASE =
   'Understand a new business domain, identify the first workflow slice, and shape the first durable model.'
 
@@ -48,6 +54,10 @@ async function fetchHistory() {
   return backendApiClient.fetchJson<HelloHistoryEntry[]>('/api/workflows/hello-world/history?limit=8')
 }
 
+async function fetchSession() {
+  return backendApiClient.fetchJson<AnonymousSession>('/api/session')
+}
+
 function formatDate(value: string) {
   return new Date(value).toLocaleString()
 }
@@ -57,6 +67,11 @@ export default function App() {
   const [name, setName] = useState('Builder')
   const [useCase, setUseCase] = useState(DEFAULT_USE_CASE)
   const [lastResult, setLastResult] = useState<HelloWorldResult | null>(null)
+
+  const sessionQuery = useQuery({
+    queryKey: ['anonymous-session'],
+    queryFn: fetchSession,
+  })
 
   const historyQuery = useQuery({
     queryKey: ['hello-history'],
@@ -81,6 +96,16 @@ export default function App() {
             This shell runs a real Temporal workflow, calls the shared LLM activity, persists history in Postgres,
             routes policy through OPA, caches via Valkey, and emits traces to Jaeger.
           </p>
+          <div className="session-chip">
+            {sessionQuery.data ? (
+              <>
+                <span>anon session</span>
+                <strong>{sessionQuery.data.sessionId.slice(0, 8)}</strong>
+              </>
+            ) : (
+              <span>bootstrapping session...</span>
+            )}
+          </div>
         </div>
         <div className="stack-grid">
           <article>

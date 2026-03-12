@@ -18,6 +18,8 @@ The local deployment stack uses one durable PostgreSQL instance with separate lo
 - Temporal default persistence (`temporal`)
 - Temporal visibility (`temporal_visibility`)
 
+The baseline also includes a signed anonymous session cookie. There is still no real login flow, but the API now issues a stable per-browser session at `/api/session` so policy evaluation and future UI personalization can hang off a real session boundary instead of a hard-coded actor stub.
+
 ## What This Repo Optimizes For
 
 - Something you can clone, build, and deploy locally without aviation-specific baggage.

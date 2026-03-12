@@ -1,6 +1,9 @@
 package net.mudpot.starterkit.apiservice;
 
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
@@ -26,47 +29,66 @@ import java.util.Map;
 public class HelloWorkflowController {
     private final HelloWorldWorkflowClient helloWorldWorkflowClient;
     private final HelloHistoryQueryService helloHistoryQueryService;
+    private final AnonymousSessionService anonymousSessionService;
     private final PolicyEvaluator policyEvaluator;
 
     public HelloWorkflowController(
         final HelloWorldWorkflowClient helloWorldWorkflowClient,
         final HelloHistoryQueryService helloHistoryQueryService,
+        final AnonymousSessionService anonymousSessionService,
         final PolicyEvaluator policyEvaluator
     ) {
         this.helloWorldWorkflowClient = helloWorldWorkflowClient;
         this.helloHistoryQueryService = helloHistoryQueryService;
+        this.anonymousSessionService = anonymousSessionService;
         this.policyEvaluator = policyEvaluator;
     }
 
     @Post("/run")
-    public HelloWorldResult run(@Body final HelloWorldRequest request) {
+    public MutableHttpResponse<HelloWorldResult> run(final HttpRequest<?> httpRequest, @Body final HelloWorldRequest request) {
         final HelloWorldRequest normalized = normalizedRequest(request);
-        requirePolicy("workflow.hello_world.run", normalized);
-        return helloWorldWorkflowClient.run(normalized.name(), normalized.useCase());
+        final AnonymousSession session = anonymousSessionService.ensureSession(httpRequest);
+        requirePolicy("workflow.hello_world.run", normalized, session);
+        return anonymousSessionService.attachCookieIfNeeded(
+            HttpResponse.ok(helloWorldWorkflowClient.run(normalized.name(), normalized.useCase())),
+            session
+        );
     }
 
     @Post("/start")
-    public WorkflowStartResponse start(@Body final HelloWorldRequest request) {
+    public MutableHttpResponse<WorkflowStartResponse> start(final HttpRequest<?> httpRequest, @Body final HelloWorldRequest request) {
         final HelloWorldRequest normalized = normalizedRequest(request);
-        requirePolicy("workflow.hello_world.start", normalized);
-        return helloWorldWorkflowClient.start(normalized.name(), normalized.useCase(), normalized.workflowId());
+        final AnonymousSession session = anonymousSessionService.ensureSession(httpRequest);
+        requirePolicy("workflow.hello_world.start", normalized, session);
+        return anonymousSessionService.attachCookieIfNeeded(
+            HttpResponse.ok(helloWorldWorkflowClient.start(normalized.name(), normalized.useCase(), normalized.workflowId())),
+            session
+        );
     }
 
     @Get("/history")
-    public List<HelloHistoryEntry> history(@QueryValue(defaultValue = "12") final int limit) {
+    public MutableHttpResponse<List<HelloHistoryEntry>> history(final HttpRequest<?> httpRequest, @QueryValue(defaultValue = "12") final int limit) {
         final int resolvedLimit = Math.max(1, Math.min(limit, 50));
-        requirePolicy("workflow.hello_world.history", null);
-        return helloHistoryQueryService.recent(resolvedLimit);
+        final AnonymousSession session = anonymousSessionService.ensureSession(httpRequest);
+        requirePolicy("workflow.hello_world.history", null, session);
+        return anonymousSessionService.attachCookieIfNeeded(
+            HttpResponse.ok(helloHistoryQueryService.recent(resolvedLimit)),
+            session
+        );
     }
 
-    private void requirePolicy(final String action, final HelloWorldRequest request) {
+    private void requirePolicy(final String action, final HelloWorldRequest request, final AnonymousSession session) {
+        final Map<String, Object> actor = Map.of(
+            "kind", session.actorKind(),
+            "session_id", session.sessionId()
+        );
         final Map<String, Object> input = request == null
             ? Map.of(
-                "actor", Map.of("role", "builder"),
+                "actor", actor,
                 "resource", Map.of("type", "hello-world", "scope", "history")
             )
             : Map.of(
-                "actor", Map.of("role", "builder"),
+                "actor", actor,
                 "resource", Map.of("type", "hello-world", "scope", "workflow"),
                 "name", request.name(),
                 "use_case", request.useCase()

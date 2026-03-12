@@ -47,6 +47,13 @@
 - `policy-service` delegates to OPA.
 - Rego policies live under `shared/policies/opa/`.
 
+## Session Pattern
+
+- StarterKit ships with anonymous sessions even though it does not ship a login system.
+- `api-service` owns the session cookie and exposes `/api/session` for bootstrap.
+- Policy input should use session-backed actor context instead of controller-local hard-coded identities.
+- Real authentication can replace or enrich the anonymous actor later without changing every endpoint contract first.
+
 ## Tracing Pattern
 
 - Java services emit OTLP spans.

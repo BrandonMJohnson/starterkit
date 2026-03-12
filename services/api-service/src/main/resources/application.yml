@@ -25,6 +25,13 @@ temporal:
   address: ${TEMPORAL_ADDRESS:127.0.0.1:7233}
   namespace: ${TEMPORAL_NAMESPACE:default}
 
+anon-session:
+  cookie-name: ${ANON_SESSION_COOKIE_NAME:starterkit_anon_session}
+  signing-secret: ${ANON_SESSION_SIGNING_SECRET:starterkit-local-anon-session-secret}
+  cookie-secure: ${ANON_SESSION_COOKIE_SECURE:false}
+  cookie-domain: ${ANON_SESSION_COOKIE_DOMAIN:}
+  max-age-days: ${ANON_SESSION_MAX_AGE_DAYS:30}
+
 policy:
   service-url: ${POLICY_SERVICE_URL:`http://127.0.0.1:8082`}
   service-enforce: ${POLICY_SERVICE_ENFORCE:true}
