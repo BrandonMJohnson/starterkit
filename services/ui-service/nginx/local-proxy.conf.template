@@ -1,0 +1,17 @@
+location /api/ {
+  proxy_pass ${UI_API_PROXY_BASE_URL};
+  proxy_set_header Host $http_host;
+  proxy_set_header X-Forwarded-Host $http_host;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header X-Forwarded-Port $server_port;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+
+location = /v1/traces {
+  proxy_pass ${UI_OTLP_PROXY_BASE_URL}/v1/traces;
+  proxy_set_header Host $http_host;
+  proxy_set_header X-Forwarded-Host $http_host;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header X-Forwarded-Port $server_port;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}

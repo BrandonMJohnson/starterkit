@@ -1,0 +1,45 @@
+micronaut:
+  application:
+    name: api-service
+  server:
+    port: 8080
+
+datasources:
+  default:
+    db-type: postgres
+    dialect: POSTGRES
+    url: jdbc:postgresql://${POSTGRES_HOST:127.0.0.1}:${POSTGRES_PORT:5432}/${POSTGRES_DB:starterkit}
+    username: ${POSTGRES_USER:starterkit}
+    password: ${POSTGRES_PASSWORD:starterkit}
+    schema-generate: NONE
+    maximum-pool-size: 10
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      locations:
+        - classpath:db/migration
+
+temporal:
+  address: ${TEMPORAL_ADDRESS:127.0.0.1:7233}
+  namespace: ${TEMPORAL_NAMESPACE:default}
+
+policy:
+  service-url: ${POLICY_SERVICE_URL:`http://127.0.0.1:8082`}
+  service-enforce: ${POLICY_SERVICE_ENFORCE:true}
+
+graph:
+  enabled: ${GRAPH_ENABLED:false}
+  uri: ${GRAPH_URI:}
+
+otel:
+  traces:
+    exporter: ${OTEL_TRACES_EXPORTER:none}
+  exporter:
+    otlp:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:`http://localhost:4318`}
+      protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL:http/protobuf}
+  service:
+    name: ${OTEL_SERVICE_NAME:api-service}
+  propagators: tracecontext,baggage

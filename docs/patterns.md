@@ -1,0 +1,77 @@
+# StarterKit Patterns
+
+## Service Boundaries
+
+- `api-service`
+  - external HTTP boundary
+  - synchronous read models
+  - workflow start/run adapters
+  - policy checks before side effects
+- `orchestration`
+  - Temporal workflows and activities
+  - durable retries/timeouts
+  - LLM, cache, and persistence side effects
+- `policy-service`
+  - small adapter over OPA
+  - central place for policy decision translation
+- `ui-service`
+  - static SPA host
+  - same-origin proxy for `/api` and tracing
+
+## Workflow Pattern
+
+1. API accepts typed input.
+2. API checks policy.
+3. API calls a typed workflow client.
+4. Workflow renders a prompt.
+5. Workflow calls the shared LLM activity.
+6. Activity persists durable results.
+7. API and UI read the resulting state back through normal service boundaries.
+
+## Caching Pattern
+
+- LLM caching lives inside the shared `LlmActivitiesImpl` path.
+- Valkey is optional in local code paths and can fail over to in-memory cache when disabled.
+- Cache keys should be explicit and domain-aware.
+
+## Persistence Pattern
+
+- Shared persistence entities and repositories live in `libraries/persistence`.
+- Schema changes land as Flyway migrations in that same library so both API and worker see the same migration set.
+- The first demo persists workflow history, not domain complexity.
+
+## Policy Pattern
+
+- Services do not embed authorization logic directly in controllers when a reusable decision can live in OPA.
+- API calls `policy-service`.
+- `policy-service` delegates to OPA.
+- Rego policies live under `shared/policies/opa/`.
+
+## Tracing Pattern
+
+- Java services emit OTLP spans.
+- Temporal client and worker tracing is bridged through `OpenTracingOptions`.
+- The UI shell forwards browser fetch traces to the same OTLP endpoint through `nginx`.
+
+## Frontend Pattern
+
+- Use a thin fetch client.
+- Put server state behind TanStack Query.
+- Keep the shell simple enough to swap in a real domain quickly.
+
+## Codex Pattern
+
+- Start with discovery when the domain is unclear.
+- Convert interview output into the first durable workflow and data slice.
+- Keep the starter repo generic; domain-specific complexity belongs in the next repo phase, not in the baseline.
+
+## Graph Store Follow-On
+
+When a graph database becomes real work:
+
+1. Add a dedicated `libraries/graph-store` boundary instead of importing a graph driver directly into multiple services.
+2. Decide whether the graph is:
+   - read-optimized query infrastructure
+   - orchestration-side relationship storage
+   - both
+3. Document the decision before spreading graph semantics into the domain model.
