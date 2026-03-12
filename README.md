@@ -12,6 +12,12 @@ StarterKit is a reusable full-stack baseline for building domain-specific produc
 
 The shipped demo is intentionally small: a single `hello-world` workflow that renders a prompt, calls the same LLM activity path used by Aviation's WX agent, persists run history, and exposes that history in the UI.
 
+The local deployment stack uses one durable PostgreSQL instance with separate logical databases for:
+
+- the app (`starterkit`)
+- Temporal default persistence (`temporal`)
+- Temporal visibility (`temporal_visibility`)
+
 ## What This Repo Optimizes For
 
 - Something you can clone, build, and deploy locally without aviation-specific baggage.
@@ -89,6 +95,8 @@ The Vite dev server proxies `/api` to `http://localhost:8080`.
 ## Deployment Model
 
 The first deployable path is Docker Compose. The service boundaries stay container-friendly so you can later replace compose with Kubernetes, Nomad, ECS, or another deployment layer without rewriting the application seams.
+
+The Compose baseline intentionally keeps a single persistent Postgres server while splitting the application, Temporal, and Temporal visibility data into separate databases. The named Docker volume `postgres-data` keeps those databases across container restarts and recreations unless you explicitly remove the volume.
 
 ## Graph DB Follow-On
 

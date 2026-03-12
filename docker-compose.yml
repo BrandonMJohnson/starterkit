@@ -9,6 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-starterkit} -d ${POSTGRES_DB:-starterkit}"]
       interval: 10s
@@ -32,6 +33,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-starterkit}
       POSTGRES_PWD: ${POSTGRES_PASSWORD:-starterkit}
       POSTGRES_SEEDS: postgres
+      DBNAME: ${TEMPORAL_DB:-temporal}
+      VISIBILITY_DBNAME: ${TEMPORAL_VISIBILITY_DB:-temporal_visibility}
       DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/development-sql.yaml
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_CLI_ADDRESS: temporal:7233
