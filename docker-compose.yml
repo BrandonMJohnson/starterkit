@@ -149,6 +149,8 @@ services:
     environment:
       UI_API_PROXY_BASE_URL: http://api-service:8080
       UI_OTLP_PROXY_BASE_URL: http://jaeger:4318
+    volumes:
+      - ./services/ui-service/build/frontend-static:/usr/share/nginx/html:ro
     ports:
       - "8090:8090"
 

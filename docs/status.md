@@ -16,6 +16,7 @@ Last updated: 2026-03-12
 - A compose-first deployment path is being wired for local deployment of the full platform baseline, including one durable Postgres instance split into separate app, Temporal, and Temporal visibility databases.
 - The `hello-world` workflow is being upgraded to use prompt rendering, real LLM calls, Postgres-backed history, and OPA-gated API access.
 - API requests now bootstrap through a signed anonymous session cookie and `/api/session`, and policy input uses session context instead of a fixed builder actor.
+- The compose-managed `ui-service` now serves the host frontend build output directly so static-asset iteration can happen against containerized `nginx` without rebuilding the image on every UI change.
 - Repo guidance is being rewritten so Codex starts with a short business-domain interview when the domain is not yet defined.
 
 ## Next 3 Tasks

@@ -94,6 +94,19 @@ npm run dev
 
 The Vite dev server proxies `/api` to `http://localhost:8080`.
 
+- Frontend iteration through the compose-managed `nginx` container:
+
+```bash
+./gradlew :services:ui-service:buildFrontendAssets
+docker compose up --build ui-service api-service orchestration policy-service
+
+cd services/ui-service/frontend
+npm install
+npm run build:watch
+```
+
+In this mode, `ui-service` serves the host `services/ui-service/build/frontend-static` directory through its own containerized `nginx`. Updating the build output on disk lets you refresh the browser against `http://localhost:8090` without rebuilding the `ui-service` image for every frontend change.
+
 ## Deployment Model
 
 The first deployable path is Docker Compose. The service boundaries stay container-friendly so you can later replace compose with Kubernetes, Nomad, ECS, or another deployment layer without rewriting the application seams.
