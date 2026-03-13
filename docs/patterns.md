@@ -23,10 +23,11 @@
 1. API accepts typed input.
 2. API checks policy.
 3. API calls a typed workflow client.
-4. Workflow renders a prompt.
-5. Workflow calls the shared LLM activity.
-6. Activity persists durable results.
-7. API and UI read the resulting state back through normal service boundaries.
+4. Workflow can call policy evaluation activities for workflow-side auth and business rules.
+5. Workflow renders a prompt.
+6. Workflow calls the shared LLM activity.
+7. Activity persists durable results.
+8. API and UI read the resulting state back through normal service boundaries.
 
 ## Caching Pattern
 
@@ -45,6 +46,7 @@
 - Services do not embed authorization logic directly in controllers when a reusable decision can live in OPA.
 - API calls `policy-service`.
 - `policy-service` delegates to OPA.
+- Workflows can call `policy-service` through a dedicated Temporal activity when policy-evaluable business rules belong inside orchestration rather than only at API ingress.
 - Rego policies live under `shared/policies/opa/`.
 
 ## Session Pattern

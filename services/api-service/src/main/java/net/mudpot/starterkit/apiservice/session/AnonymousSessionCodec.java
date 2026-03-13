@@ -1,4 +1,4 @@
-package net.mudpot.starterkit.apiservice;
+package net.mudpot.starterkit.apiservice.session;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

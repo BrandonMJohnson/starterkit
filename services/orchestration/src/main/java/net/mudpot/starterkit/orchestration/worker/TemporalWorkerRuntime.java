@@ -22,6 +22,7 @@ import net.mudpot.starterkit.orchestration.config.TemporalWorkerConfig;
 import net.mudpot.starterkit.orchestration.system.activities.HelloActivitiesImpl;
 import net.mudpot.starterkit.orchestration.system.activities.LlmActivitiesImpl;
 import net.mudpot.starterkit.orchestration.system.activities.PromptActivitiesImpl;
+import net.mudpot.starterkit.orchestration.policy.activities.PolicyEvaluationActivitiesImpl;
 import net.mudpot.starterkit.orchestration.system.workflows.HelloWorldWorkflowImpl;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,6 +38,7 @@ public class TemporalWorkerRuntime {
     private final HelloActivitiesImpl helloActivities;
     private final PromptActivitiesImpl promptActivities;
     private final LlmActivitiesImpl llmActivities;
+    private final PolicyEvaluationActivitiesImpl policyEvaluationActivities;
 
     @Inject
     public TemporalWorkerRuntime(
@@ -45,6 +47,7 @@ public class TemporalWorkerRuntime {
         final HelloActivitiesImpl helloActivities,
         final PromptActivitiesImpl promptActivities,
         final LlmActivitiesImpl llmActivities,
+        final PolicyEvaluationActivitiesImpl policyEvaluationActivities,
         final OpenTracingOptions openTracingOptions
     ) {
         this.config = config;
@@ -52,6 +55,7 @@ public class TemporalWorkerRuntime {
         this.helloActivities = helloActivities;
         this.promptActivities = promptActivities;
         this.llmActivities = llmActivities;
+        this.policyEvaluationActivities = policyEvaluationActivities;
         final WorkflowServiceStubs service = WorkflowServiceStubs.newInstance(
             WorkflowServiceStubsOptions.newBuilder().setTarget(config.temporalAddress()).build()
         );
@@ -76,7 +80,7 @@ public class TemporalWorkerRuntime {
     private void registerHelloWorker() {
         final Worker helloWorker = workerFactory.newWorker(config.helloTaskQueue());
         helloWorker.registerWorkflowImplementationFactory(HelloWorldWorkflow.class, () -> beanContext.createBean(HelloWorldWorkflowImpl.class));
-        helloWorker.registerActivitiesImplementations(helloActivities, promptActivities, llmActivities);
+        helloWorker.registerActivitiesImplementations(helloActivities, promptActivities, llmActivities, policyEvaluationActivities);
     }
 
     @EventListener

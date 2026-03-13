@@ -1,4 +1,4 @@
-package net.mudpot.starterkit.apiservice;
+package net.mudpot.starterkit.apiservice.controllers;
 
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.HttpRequest;
@@ -12,6 +12,8 @@ import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import net.mudpot.starterkit.apiservice.session.AnonymousSession;
+import net.mudpot.starterkit.apiservice.session.AnonymousSessionService;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloHistoryEntry;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldRequest;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldResult;
@@ -20,6 +22,7 @@ import net.mudpot.starterkit.commons.policy.PolicyEvaluationResult;
 import net.mudpot.starterkit.commons.policy.PolicyEvaluator;
 import net.mudpot.starterkit.orchestrationclients.model.WorkflowStartResponse;
 import net.mudpot.starterkit.orchestrationclients.system.HelloWorldWorkflowClient;
+import net.mudpot.starterkit.persistence.history.HelloHistoryQueryService;
 
 import java.util.List;
 import java.util.Map;
@@ -50,7 +53,7 @@ public class HelloWorkflowController {
         final AnonymousSession session = anonymousSessionService.ensureSession(httpRequest);
         requirePolicy("workflow.hello_world.run", normalized, session);
         return anonymousSessionService.attachCookieIfNeeded(
-            HttpResponse.ok(helloWorldWorkflowClient.run(normalized.name(), normalized.useCase())),
+            HttpResponse.ok(helloWorldWorkflowClient.run(normalized.name(), normalized.useCase(), session.actorKind(), session.sessionId())),
             session
         );
     }
@@ -61,7 +64,7 @@ public class HelloWorkflowController {
         final AnonymousSession session = anonymousSessionService.ensureSession(httpRequest);
         requirePolicy("workflow.hello_world.start", normalized, session);
         return anonymousSessionService.attachCookieIfNeeded(
-            HttpResponse.ok(helloWorldWorkflowClient.start(normalized.name(), normalized.useCase(), normalized.workflowId())),
+            HttpResponse.ok(helloWorldWorkflowClient.start(normalized.name(), normalized.useCase(), normalized.workflowId(), session.actorKind(), session.sessionId())),
             session
         );
     }

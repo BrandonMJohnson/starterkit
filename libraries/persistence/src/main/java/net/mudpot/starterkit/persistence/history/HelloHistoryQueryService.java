@@ -1,8 +1,7 @@
-package net.mudpot.starterkit.apiservice;
+package net.mudpot.starterkit.persistence.history;
 
 import jakarta.inject.Singleton;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloHistoryEntry;
-import net.mudpot.starterkit.persistence.history.PromptRunRepository;
 
 import java.util.List;
 

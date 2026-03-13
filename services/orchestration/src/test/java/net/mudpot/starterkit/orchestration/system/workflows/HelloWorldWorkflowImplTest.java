@@ -1,21 +1,28 @@
 package net.mudpot.starterkit.orchestration.system.workflows;
 
 import io.temporal.client.WorkflowOptions;
+import io.temporal.client.WorkflowFailedException;
+import io.temporal.failure.ApplicationFailure;
 import io.temporal.testing.TestWorkflowEnvironment;
 import net.mudpot.starterkit.commons.ai.model.LlmResponse;
 import net.mudpot.starterkit.commons.ai.model.PromptBundle;
 import net.mudpot.starterkit.commons.orchestration.TaskQueues;
-import net.mudpot.starterkit.commons.orchestration.system.activities.HelloActivities;
-import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldResult;
-import net.mudpot.starterkit.commons.orchestration.system.workflows.HelloWorldWorkflow;
 import net.mudpot.starterkit.commons.orchestration.ai.activities.LlmActivities;
 import net.mudpot.starterkit.commons.orchestration.ai.activities.PromptActivities;
+import net.mudpot.starterkit.commons.orchestration.policy.activities.PolicyEvaluationActivities;
+import net.mudpot.starterkit.commons.orchestration.system.activities.HelloActivities;
+import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldResult;
+import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldWorkflowInput;
+import net.mudpot.starterkit.commons.orchestration.system.workflows.HelloWorldWorkflow;
+import net.mudpot.starterkit.commons.policy.PolicyEvaluationRequest;
+import net.mudpot.starterkit.commons.policy.PolicyEvaluationResult;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class HelloWorldWorkflowImplTest {
     @Test
@@ -27,7 +34,8 @@ class HelloWorldWorkflowImplTest {
                     () -> new HelloWorldWorkflowImpl(
                         new StubHelloActivities(),
                         new StubPromptActivities(),
-                        new StubLlmActivities()
+                        new StubLlmActivities(),
+                        new AllowPolicyActivities()
                     )
                 );
             environment.start();
@@ -40,11 +48,46 @@ class HelloWorldWorkflowImplTest {
                     .build()
             );
 
-            final HelloWorldResult result = workflow.run("Brandon", "Build a flight-club platform.");
+            final HelloWorldResult result = workflow.run(
+                new HelloWorldWorkflowInput("Brandon", "Build a flight-club platform.", "anonymous", "anon-session-1")
+            );
 
             assertEquals("wf-hello", result.workflowId());
             assertEquals("Hello from the LLM.", result.greeting());
             assertEquals("starter_hello_v1", result.promptTemplate());
+        }
+    }
+
+    @Test
+    void runRejectsWhenWorkflowPolicyDenies() {
+        try (TestWorkflowEnvironment environment = TestWorkflowEnvironment.newInstance()) {
+            environment.newWorker(TaskQueues.HELLO_WORLD)
+                .registerWorkflowImplementationFactory(
+                    HelloWorldWorkflow.class,
+                    () -> new HelloWorldWorkflowImpl(
+                        new StubHelloActivities(),
+                        new StubPromptActivities(),
+                        new StubLlmActivities(),
+                        new DenyPolicyActivities()
+                    )
+                );
+            environment.start();
+
+            final HelloWorldWorkflow workflow = environment.getWorkflowClient().newWorkflowStub(
+                HelloWorldWorkflow.class,
+                WorkflowOptions.newBuilder()
+                    .setTaskQueue(TaskQueues.HELLO_WORLD)
+                    .setWorkflowId("wf-policy-denied")
+                    .build()
+            );
+
+            final WorkflowFailedException exception = assertThrows(
+                WorkflowFailedException.class,
+                () -> workflow.run(new HelloWorldWorkflowInput("Brandon", "Too short", "anonymous", "anon-session-1"))
+            );
+
+            final ApplicationFailure cause = (ApplicationFailure) exception.getCause();
+            assertEquals("workflow_policy_denied:hello_world_use_case_too_short", cause.getType());
         }
     }
 
@@ -91,6 +134,20 @@ class HelloWorldWorkflowImplTest {
             final boolean cacheByPromptHash
         ) {
             return new LlmResponse("openai-compatible", "demo", "Hello from the LLM.", Map.of(), Map.of(), Map.of("hit", false));
+        }
+    }
+
+    private static final class AllowPolicyActivities implements PolicyEvaluationActivities {
+        @Override
+        public PolicyEvaluationResult evaluatePolicy(final PolicyEvaluationRequest request) {
+            return new PolicyEvaluationResult(true, "allowed", "starterkit.v1");
+        }
+    }
+
+    private static final class DenyPolicyActivities implements PolicyEvaluationActivities {
+        @Override
+        public PolicyEvaluationResult evaluatePolicy(final PolicyEvaluationRequest request) {
+            return new PolicyEvaluationResult(false, "hello_world_use_case_too_short", "starterkit.v1");
         }
     }
 }

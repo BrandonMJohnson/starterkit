@@ -8,6 +8,6 @@ import java.util.Map;
 
 @Client("${policy.opa-url:`http://127.0.0.1:8181`}")
 public interface OpaSidecarHttpClient {
-    @Post("/v1/data/starterkit/authz/allow")
+    @Post("/v1/data/starterkit/authz")
     Map<String, Object> evaluate(@Body Map<String, Object> request);
 }

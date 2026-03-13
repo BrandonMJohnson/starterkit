@@ -1,4 +1,4 @@
-package net.mudpot.starterkit.apiservice;
+package net.mudpot.starterkit.apiservice.session;
 
 public record AnonymousSessionResponse(
     String sessionId,

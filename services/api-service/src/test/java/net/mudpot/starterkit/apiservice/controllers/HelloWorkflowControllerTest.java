@@ -1,8 +1,11 @@
-package net.mudpot.starterkit.apiservice;
+package net.mudpot.starterkit.apiservice.controllers;
 
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.exceptions.HttpStatusException;
+import net.mudpot.starterkit.apiservice.session.AnonymousSession;
+import net.mudpot.starterkit.apiservice.session.AnonymousSessionConfig;
+import net.mudpot.starterkit.apiservice.session.AnonymousSessionService;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldRequest;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldResult;
 import net.mudpot.starterkit.commons.policy.PolicyEvaluationRequest;
@@ -10,6 +13,7 @@ import net.mudpot.starterkit.commons.policy.PolicyEvaluationResult;
 import net.mudpot.starterkit.commons.policy.PolicyEvaluator;
 import net.mudpot.starterkit.orchestrationclients.model.WorkflowStartResponse;
 import net.mudpot.starterkit.orchestrationclients.system.HelloWorldWorkflowClient;
+import net.mudpot.starterkit.persistence.history.HelloHistoryQueryService;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -40,6 +44,8 @@ class HelloWorkflowControllerTest {
 
         assertEquals("Brandon", client.runName);
         assertEquals("Build a club operations platform.", client.runUseCase);
+        assertEquals("anonymous", client.runActorKind);
+        assertEquals("anon-session-1", client.runSessionId);
         assertEquals("Hello there.", response.greeting());
         assertEquals("anon-session-1", ((Map<?, ?>) policyEvaluator.lastRequest.input()).get("actor") instanceof Map<?, ?> actor ? actor.get("session_id") : "");
     }
@@ -64,6 +70,8 @@ class HelloWorkflowControllerTest {
     private static final class StubHelloWorldWorkflowClient extends HelloWorldWorkflowClient {
         private String runName;
         private String runUseCase;
+        private String runActorKind;
+        private String runSessionId;
         private HelloWorldResult runResponse;
 
         private StubHelloWorldWorkflowClient() {
@@ -71,14 +79,22 @@ class HelloWorkflowControllerTest {
         }
 
         @Override
-        public HelloWorldResult run(final String name, final String useCase) {
+        public HelloWorldResult run(final String name, final String useCase, final String actorKind, final String sessionId) {
             this.runName = name;
             this.runUseCase = useCase;
+            this.runActorKind = actorKind;
+            this.runSessionId = sessionId;
             return runResponse;
         }
 
         @Override
-        public WorkflowStartResponse start(final String name, final String useCase, final String workflowId) {
+        public WorkflowStartResponse start(
+            final String name,
+            final String useCase,
+            final String workflowId,
+            final String actorKind,
+            final String sessionId
+        ) {
             return new WorkflowStartResponse("HelloWorldWorkflow", "wf-1", "hello-world-task-queue", "run-1");
         }
     }

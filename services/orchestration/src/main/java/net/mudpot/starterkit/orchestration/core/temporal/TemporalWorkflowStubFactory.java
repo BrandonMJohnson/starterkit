@@ -7,6 +7,7 @@ import io.temporal.common.RetryOptions;
 import io.temporal.workflow.Workflow;
 import jakarta.inject.Named;
 import net.mudpot.starterkit.commons.orchestration.ai.activities.LlmActivities;
+import net.mudpot.starterkit.commons.orchestration.policy.activities.PolicyEvaluationActivities;
 import net.mudpot.starterkit.commons.orchestration.ai.activities.PromptActivities;
 import net.mudpot.starterkit.commons.orchestration.system.activities.HelloActivities;
 
@@ -45,6 +46,25 @@ public class TemporalWorkflowStubFactory {
                         .setBackoffCoefficient(2.0)
                         .setMaximumInterval(Duration.ofSeconds(20))
                         .setMaximumAttempts(2)
+                        .build()
+                )
+                .build()
+        );
+    }
+
+    @Prototype
+    @Named("policyEvaluationActivitiesStub")
+    PolicyEvaluationActivities policyEvaluationActivitiesStub() {
+        return Workflow.newActivityStub(
+            PolicyEvaluationActivities.class,
+            ActivityOptions.newBuilder()
+                .setStartToCloseTimeout(Duration.ofSeconds(15))
+                .setRetryOptions(
+                    RetryOptions.newBuilder()
+                        .setInitialInterval(Duration.ofSeconds(1))
+                        .setBackoffCoefficient(2.0)
+                        .setMaximumInterval(Duration.ofSeconds(5))
+                        .setMaximumAttempts(3)
                         .build()
                 )
                 .build()

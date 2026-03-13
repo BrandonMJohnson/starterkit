@@ -6,10 +6,13 @@ import jakarta.inject.Named;
 import net.mudpot.starterkit.commons.ai.model.LlmResponse;
 import net.mudpot.starterkit.commons.ai.model.PromptBundle;
 import net.mudpot.starterkit.commons.orchestration.ai.activities.LlmActivities;
+import net.mudpot.starterkit.commons.orchestration.policy.activities.PolicyEvaluationActivities;
 import net.mudpot.starterkit.commons.orchestration.ai.activities.PromptActivities;
 import net.mudpot.starterkit.commons.orchestration.system.activities.HelloActivities;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldResult;
+import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldWorkflowInput;
 import net.mudpot.starterkit.commons.orchestration.system.workflows.HelloWorldWorkflow;
+import net.mudpot.starterkit.orchestration.core.policy.WorkflowPolicyEnforcer;
 
 import java.util.Map;
 
@@ -18,23 +21,41 @@ public class HelloWorldWorkflowImpl implements HelloWorldWorkflow {
     private final HelloActivities helloActivities;
     private final PromptActivities promptActivities;
     private final LlmActivities llmActivities;
+    private final PolicyEvaluationActivities policyEvaluationActivities;
 
     public HelloWorldWorkflowImpl(
         @Named("helloActivitiesStub") final HelloActivities helloActivities,
         @Named("promptActivitiesStub") final PromptActivities promptActivities,
-        @Named("llmActivitiesStub") final LlmActivities llmActivities
+        @Named("llmActivitiesStub") final LlmActivities llmActivities,
+        @Named("policyEvaluationActivitiesStub") final PolicyEvaluationActivities policyEvaluationActivities
     ) {
         this.helloActivities = helloActivities;
         this.promptActivities = promptActivities;
         this.llmActivities = llmActivities;
+        this.policyEvaluationActivities = policyEvaluationActivities;
     }
 
     @Override
-    public HelloWorldResult run(final String name, final String useCase) {
-        final String normalizedName = name == null || name.isBlank() ? "World" : name.trim();
-        final String normalizedUseCase = useCase == null || useCase.isBlank()
+    public HelloWorldResult run(final HelloWorldWorkflowInput input) {
+        final String normalizedName = input == null || input.name() == null || input.name().isBlank() ? "World" : input.name().trim();
+        final String normalizedUseCase = input == null || input.useCase() == null || input.useCase().isBlank()
             ? "Demonstrate the StarterKit platform baseline."
-            : useCase.trim();
+            : input.useCase().trim();
+        WorkflowPolicyEnforcer.enforce(
+            policyEvaluationActivities,
+            "workflow.hello_world.execute",
+            Map.of(
+                "resource_name", "workflow",
+                "actor", Map.of(
+                    "kind", input == null || input.actorKind() == null ? "" : input.actorKind().trim(),
+                    "session_id", input == null || input.sessionId() == null ? "" : input.sessionId().trim()
+                ),
+                "request", Map.of(
+                    "name", normalizedName,
+                    "use_case", normalizedUseCase
+                )
+            )
+        );
         final PromptBundle prompt = promptActivities.renderPrompt("starter_hello_v1", Map.of(
             "name", normalizedName,
             "use_case", normalizedUseCase

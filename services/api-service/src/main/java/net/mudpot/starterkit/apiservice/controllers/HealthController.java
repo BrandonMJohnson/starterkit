@@ -1,4 +1,4 @@
-package net.mudpot.starterkit.apiservice;
+package net.mudpot.starterkit.apiservice.controllers;
 
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;

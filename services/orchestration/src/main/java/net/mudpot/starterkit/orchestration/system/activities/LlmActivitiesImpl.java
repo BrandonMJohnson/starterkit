@@ -13,6 +13,12 @@ import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import com.openai.models.completions.CompletionUsage;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import jakarta.inject.Singleton;
 import net.mudpot.starterkit.commons.orchestration.ai.activities.LlmActivities;
 import net.mudpot.starterkit.commons.ai.model.LlmResponse;
@@ -41,9 +47,11 @@ public class LlmActivitiesImpl implements LlmActivities {
     private final JedisPooled redis;
     private final OpenAIClient openAiClient;
     private final AnthropicClient anthropicClient;
+    private final Tracer tracer;
 
-    public LlmActivitiesImpl(final TemporalWorkerConfig config) {
+    public LlmActivitiesImpl(final TemporalWorkerConfig config, final OpenTelemetry openTelemetry) {
         this.config = config;
+        this.tracer = openTelemetry.getTracer("starterkit.llm");
         this.redis = createRedisClient(config);
         this.openAiClient = OpenAIOkHttpClient.builder()
             .apiKey(sanitize(config.openAiApiKey()).isBlank() ? "ollama" : sanitize(config.openAiApiKey()))
@@ -71,12 +79,19 @@ public class LlmActivitiesImpl implements LlmActivities {
         final int cacheTtlSeconds,
         final boolean cacheByPromptHash
     ) {
+        final Span span = tracer.spanBuilder("llm.call")
+            .setSpanKind(SpanKind.INTERNAL)
+            .setAttribute("llm.provider", normalizeProvider(provider))
+            .startSpan();
+        try (Scope ignored = span.makeCurrent()) {
         final String prompt = sanitize(userPrompt);
         if (prompt.isBlank()) {
+            span.setStatus(StatusCode.ERROR, "missing user prompt");
             throw new RuntimeException("LLM user prompt is required");
         }
         final String chosenProvider = normalizeProvider(provider);
         if (!isOpenAiCompatibleProvider(chosenProvider) && !isAnthropicProvider(chosenProvider)) {
+            span.setStatus(StatusCode.ERROR, "unsupported provider");
             throw new RuntimeException("Unsupported LLM provider: " + chosenProvider);
         }
 
@@ -84,8 +99,11 @@ public class LlmActivitiesImpl implements LlmActivities {
             ? defaultModelForProvider(chosenProvider)
             : sanitize(model);
         if (chosenModel.isBlank()) {
+            span.setStatus(StatusCode.ERROR, "missing model");
             throw new RuntimeException("LLM model is required");
         }
+        span.setAttribute("llm.provider", chosenProvider);
+        span.setAttribute("llm.model", chosenModel);
 
         final int resolvedMaxTokens = Math.max(1, maxTokens <= 0 ? 800 : maxTokens);
         final String normalizedSystemPrompt = sanitize(systemPrompt);
@@ -101,19 +119,28 @@ public class LlmActivitiesImpl implements LlmActivities {
         );
         final int ttlSeconds = Math.max(0, cacheTtlSeconds);
         final boolean useCache = !resolvedCacheKey.isBlank() && ttlSeconds > 0;
+        span.setAttribute("llm.cache.enabled", useCache);
+        span.setAttribute("llm.cache.ttl_seconds", ttlSeconds);
+        span.setAttribute("llm.max_tokens", resolvedMaxTokens);
+        span.setAttribute("llm.system_prompt.present", !normalizedSystemPrompt.isBlank());
         final long now = Instant.now().getEpochSecond();
         if (useCache) {
             final LlmResponse cached = getCached(resolvedCacheKey, now);
             if (cached != null) {
+                span.setAttribute("llm.cache.hit", true);
+                span.addEvent("llm cache hit");
                 return cached;
             }
         }
+        span.setAttribute("llm.cache.hit", false);
+        span.addEvent("llm cache miss");
 
         final ProviderResult providerResult = isAnthropicProvider(chosenProvider)
             ? callAnthropic(prompt, chosenModel, normalizedSystemPrompt, temperature, resolvedMaxTokens)
             : callOpenAiCompatible(prompt, chosenModel, normalizedSystemPrompt, temperature, resolvedMaxTokens);
         final String text = providerResult.text();
         if (text.isBlank()) {
+            span.setStatus(StatusCode.ERROR, "empty llm response");
             throw new RuntimeException("LLM returned empty response");
         }
 
@@ -141,7 +168,15 @@ public class LlmActivitiesImpl implements LlmActivities {
             setCached(resolvedCacheKey, ttlSeconds, expiresAt, response);
             response.getCache().put("expires_at_epoch", expiresAt);
         }
+        span.setStatus(StatusCode.OK);
         return response;
+        } catch (final RuntimeException exception) {
+            span.recordException(exception);
+            span.setStatus(StatusCode.ERROR, exception.getMessage() == null ? "llm-call-failed" : exception.getMessage());
+            throw exception;
+        } finally {
+            span.end();
+        }
     }
 
     private ProviderResult callOpenAiCompatible(
@@ -151,6 +186,12 @@ public class LlmActivitiesImpl implements LlmActivities {
         final double temperature,
         final int maxTokens
     ) {
+        final Span span = tracer.spanBuilder("llm.provider.openai-compatible")
+            .setSpanKind(SpanKind.CLIENT)
+            .setAttribute("llm.provider", "openai-compatible")
+            .setAttribute("llm.model", model)
+            .startSpan();
+        try (Scope ignored = span.makeCurrent()) {
         final ChatCompletionCreateParams.Builder paramsBuilder = ChatCompletionCreateParams.builder()
             .model(model)
             .temperature(temperature)
@@ -164,7 +205,15 @@ public class LlmActivitiesImpl implements LlmActivities {
         final String text = completion.choices().isEmpty()
             ? ""
             : completion.choices().get(0).message().content().orElse("").trim();
+        span.setStatus(StatusCode.OK);
         return new ProviderResult(text, extractUsage(completion.usage().orElse(null)));
+        } catch (final RuntimeException exception) {
+            span.recordException(exception);
+            span.setStatus(StatusCode.ERROR, exception.getMessage() == null ? "openai-compatible-call-failed" : exception.getMessage());
+            throw exception;
+        } finally {
+            span.end();
+        }
     }
 
     private ProviderResult callAnthropic(
@@ -174,7 +223,14 @@ public class LlmActivitiesImpl implements LlmActivities {
         final double temperature,
         final int maxTokens
     ) {
+        final Span span = tracer.spanBuilder("llm.provider.anthropic")
+            .setSpanKind(SpanKind.CLIENT)
+            .setAttribute("llm.provider", "anthropic")
+            .setAttribute("llm.model", model)
+            .startSpan();
+        try (Scope ignored = span.makeCurrent()) {
         if (sanitize(config.anthropicApiKey()).isBlank()) {
+            span.setStatus(StatusCode.ERROR, "missing anthropic api key");
             throw new RuntimeException("AI_ANTHROPIC_API_KEY is not set");
         }
 
@@ -208,9 +264,15 @@ public class LlmActivitiesImpl implements LlmActivities {
             usageMap.put("output_tokens", usage.outputTokens());
             usageMap.put("cache_creation_input_tokens", usage.cacheCreationInputTokens().orElse(0L));
             usageMap.put("cache_read_input_tokens", usage.cacheReadInputTokens().orElse(0L));
+            span.setStatus(StatusCode.OK);
             return new ProviderResult(text.toString().trim(), usageMap);
         } catch (final Exception ex) {
+            span.recordException(ex);
+            span.setStatus(StatusCode.ERROR, "anthropic-call-failed");
             throw new RuntimeException("Anthropic request failed", ex);
+        }
+        } finally {
+            span.end();
         }
     }
 
@@ -344,7 +406,7 @@ public class LlmActivitiesImpl implements LlmActivities {
     private void redisSet(final String key, final Map<String, Object> payload, final int ttlSeconds) {
         try {
             redis.setex(key, Math.max(1, ttlSeconds), OBJECT_MAPPER.writeValueAsString(payload));
-        } catch (Exception ignored) {
+        } catch (Exception exception) {
             // Best effort only.
         }
     }

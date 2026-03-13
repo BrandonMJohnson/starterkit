@@ -1,4 +1,4 @@
-package net.mudpot.starterkit.apiservice;
+package net.mudpot.starterkit.apiservice.session;
 
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
