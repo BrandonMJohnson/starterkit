@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { backendApiClient } from './lib/api/backendApiClient'
+import { fetchUiRuntimeConfig } from './lib/runtime/uiRuntimeConfig'
 import './App.css'
 
 type HelloWorldResult = {
@@ -73,6 +74,11 @@ export default function App() {
     queryFn: fetchSession,
   })
 
+  const uiRuntimeConfigQuery = useQuery({
+    queryKey: ['ui-runtime-config'],
+    queryFn: fetchUiRuntimeConfig,
+  })
+
   const historyQuery = useQuery({
     queryKey: ['hello-history'],
     queryFn: fetchHistory,
@@ -132,6 +138,26 @@ export default function App() {
             <span>Tracing</span>
             <strong>OpenTelemetry</strong>
           </article>
+        </div>
+        <div className="stack-shortcuts">
+          <div className="stack-shortcuts__header">
+            <p className="eyebrow">Stack Shortcuts</p>
+            <span>Jump to the running services and observability surfaces.</span>
+          </div>
+          <div className="stack-shortcuts__grid">
+            {uiRuntimeConfigQuery.data?.serviceShortcuts.map((shortcut) => (
+              <a
+                className="stack-shortcut"
+                href={shortcut.href}
+                key={shortcut.name}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <strong>{shortcut.name}</strong>
+                <span>{shortcut.description}</span>
+              </a>
+            ))}
+          </div>
         </div>
       </section>
 

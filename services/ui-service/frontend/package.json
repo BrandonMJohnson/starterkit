@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "starterkit-ui",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -15,8 +15,10 @@
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/core": "^2.1.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.206.0",
+    "@opentelemetry/resources": "^2.6.0",
     "@opentelemetry/sdk-trace-base": "^2.1.0",
     "@opentelemetry/sdk-trace-web": "^2.1.0",
+    "@opentelemetry/semantic-conventions": "^1.40.0",
     "@tanstack/react-query": "^5.90.21",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

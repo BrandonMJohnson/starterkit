@@ -9,6 +9,7 @@ COPY build/frontend-static/ /usr/share/nginx/html/
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY nginx/local-proxy.conf.template /etc/starterkit-ui/local-proxy.conf.template
+COPY nginx/runtime-config.json.template /etc/starterkit-ui/runtime-config.json.template
 COPY nginx/entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh

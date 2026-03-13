@@ -55,24 +55,24 @@ StarterKit/
 ## Quick Start
 
 1. Copy `.env.example` to `.env` and set the LLM values that match your local setup.
-2. Build the repo:
-
-```bash
-./gradlew build
-```
-
-3. Start the local stack:
+2. Start the local stack:
 
 ```bash
 docker compose up --build
 ```
 
-4. Open:
+This path now uses a root multi-stage Docker build, so Compose compiles the full Gradle project and the UI assets before assembling the runtime images.
 
-- UI shell: [http://localhost:8090](http://localhost:8090)
-- API health: [http://localhost:8080/api/healthz](http://localhost:8080/api/healthz)
-- Temporal UI: [http://localhost:8233](http://localhost:8233)
-- Jaeger: [http://localhost:16686](http://localhost:16686)
+The default local `ui-service` path also mounts `services/ui-service/build/frontend-static` as an overlay when that directory contains a host build, so frontend watch output can take over without replacing the clean-checkout fallback baked into the image.
+
+3. Open:
+
+- UI shell: [http://localhost:18090](http://localhost:18090)
+- API health: [http://localhost:18080/api/healthz](http://localhost:18080/api/healthz)
+- Temporal UI: [http://localhost:18233](http://localhost:18233)
+- Jaeger: [http://localhost:18686](http://localhost:18686)
+
+The compose host ports are configurable through `.env` if those defaults still collide with other local services.
 
 ## Local Iteration
 
@@ -94,7 +94,15 @@ npm run dev
 
 The Vite dev server proxies `/api` to `http://localhost:8080`.
 
-- Frontend iteration through the compose-managed `nginx` container:
+- Frontend validation through the compose-managed `nginx` container:
+
+```bash
+docker compose up --build ui-service api-service orchestration policy-service
+```
+
+In this mode, `ui-service` serves baked image assets until a host frontend build is present, then automatically switches to the mounted overlay for fast browser refreshes.
+
+- Fast UI iteration with the default compose overlay:
 
 ```bash
 ./gradlew :services:ui-service:buildFrontendAssets
@@ -105,7 +113,7 @@ npm install
 npm run build:watch
 ```
 
-In this mode, `ui-service` serves the host `services/ui-service/build/frontend-static` directory through its own containerized `nginx`. Updating the build output on disk lets you refresh the browser against `http://localhost:8090` without rebuilding the `ui-service` image for every frontend change.
+This keeps the containerized `nginx` path, but the mounted `services/ui-service/build/frontend-static` directory takes over as soon as it contains a frontend build so browser refreshes pick up rebuilds without rebuilding the image.
 
 ## Deployment Model
 

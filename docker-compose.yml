@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-starterkit}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-starterkit}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-15432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./infra/postgres/initdb:/docker-entrypoint-initdb.d:ro
@@ -20,7 +20,7 @@ services:
     image: valkey/valkey:8-alpine
     command: ["valkey-server", "--save", "", "--appendonly", "no"]
     ports:
-      - "6379:6379"
+      - "${VALKEY_HOST_PORT:-16379}:6379"
 
   temporal:
     image: temporalio/auto-setup:1.29.2
@@ -39,7 +39,7 @@ services:
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_CLI_ADDRESS: temporal:7233
     ports:
-      - "7233:7233"
+      - "${TEMPORAL_HOST_PORT:-17233}:7233"
     volumes:
       - ./infra/temporal/dynamicconfig:/etc/temporal/config/dynamicconfig
 
@@ -50,38 +50,43 @@ services:
     environment:
       TEMPORAL_ADDRESS: temporal:7233
     ports:
-      - "8233:8080"
+      - "${TEMPORAL_UI_HOST_PORT:-18233}:8080"
 
   jaeger:
     image: jaegertracing/all-in-one:1.75.0
     ports:
-      - "16686:16686"
-      - "4317:4317"
-      - "4318:4318"
+      - "${JAEGER_UI_HOST_PORT:-18686}:16686"
+      - "${OTEL_GRPC_HOST_PORT:-14317}:4317"
+      - "${OTEL_HTTP_HOST_PORT:-14318}:4318"
 
   opa:
     image: openpolicyagent/opa:1.3.0-static
     command: ["run", "--server", "--addr=0.0.0.0:8181", "--set=decision_logs.console=true", "/policies"]
     ports:
-      - "8181:8181"
+      - "${OPA_HOST_PORT:-18181}:8181"
     volumes:
       - ./shared/policies/opa:/policies:ro
 
   policy-service:
     build:
-      context: ./services/policy-service
+      context: .
+      dockerfile: Dockerfile
+      target: policy-service
     depends_on:
       - opa
     environment:
       POLICY_OPA_URL: http://opa:8181
       OTEL_TRACES_EXPORTER: otlp
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_TRACES_SAMPLER: always_on
     ports:
-      - "8082:8082"
+      - "${POLICY_SERVICE_HOST_PORT:-18082}:8082"
 
   api-service:
     build:
-      context: ./services/api-service
+      context: .
+      dockerfile: Dockerfile
+      target: api-service
     depends_on:
       postgres:
         condition: service_healthy
@@ -99,14 +104,17 @@ services:
       POLICY_SERVICE_URL: http://policy-service:8082
       OTEL_TRACES_EXPORTER: otlp
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_TRACES_SAMPLER: always_on
       GRAPH_ENABLED: ${GRAPH_ENABLED:-false}
       GRAPH_URI: ${GRAPH_URI:-}
     ports:
-      - "8080:8080"
+      - "${API_SERVICE_HOST_PORT:-18080}:8080"
 
   orchestration:
     build:
-      context: ./services/orchestration
+      context: .
+      dockerfile: Dockerfile
+      target: orchestration
     depends_on:
       postgres:
         condition: service_healthy
@@ -136,23 +144,33 @@ services:
       AI_ANTHROPIC_DEFAULT_MODEL: ${AI_ANTHROPIC_DEFAULT_MODEL:-claude-sonnet-4-6}
       OTEL_TRACES_EXPORTER: otlp
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_TRACES_SAMPLER: always_on
+      POLICY_SERVICE_URL: http://policy-service:8082
       GRAPH_ENABLED: ${GRAPH_ENABLED:-false}
       GRAPH_URI: ${GRAPH_URI:-}
     ports:
-      - "8081:8081"
+      - "${ORCHESTRATION_HOST_PORT:-18081}:8081"
 
   ui-service:
     build:
-      context: ./services/ui-service
+      context: .
+      dockerfile: Dockerfile
+      target: ui-service
     depends_on:
       - api-service
     environment:
       UI_API_PROXY_BASE_URL: http://api-service:8080
       UI_OTLP_PROXY_BASE_URL: http://jaeger:4318
+      UI_PUBLIC_API_URL: http://localhost:${API_SERVICE_HOST_PORT:-18080}/api/healthz
+      UI_PUBLIC_ORCHESTRATION_URL: http://localhost:${ORCHESTRATION_HOST_PORT:-18081}/healthz
+      UI_PUBLIC_POLICY_URL: http://localhost:${POLICY_SERVICE_HOST_PORT:-18082}/healthz
+      UI_PUBLIC_OPA_URL: http://localhost:${OPA_HOST_PORT:-18181}
+      UI_PUBLIC_TEMPORAL_UI_URL: http://localhost:${TEMPORAL_UI_HOST_PORT:-18233}
+      UI_PUBLIC_JAEGER_URL: http://localhost:${JAEGER_UI_HOST_PORT:-18686}
     volumes:
-      - ./services/ui-service/build/frontend-static:/usr/share/nginx/html:ro
+      - ./services/ui-service/build/frontend-static:/var/run/starterkit-ui-overlay:ro
     ports:
-      - "8090:8090"
+      - "${UI_SERVICE_HOST_PORT:-18090}:8090"
 
 volumes:
   postgres-data:

@@ -56,6 +56,7 @@
 }
 
 .stack-grid article,
+.stack-shortcut,
 .history-item,
 .result-card {
   border-radius: 20px;
@@ -83,6 +84,62 @@
   padding: 16px;
   display: grid;
   gap: 6px;
+}
+
+.stack-shortcuts {
+  display: grid;
+  gap: 14px;
+}
+
+.stack-shortcuts__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.stack-shortcuts__header .eyebrow {
+  margin: 0;
+}
+
+.stack-shortcuts__header span {
+  color: rgba(176, 201, 220, 0.72);
+  font-size: 0.9rem;
+}
+
+.stack-shortcuts__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.stack-shortcut {
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.stack-shortcut:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 190, 116, 0.52);
+  background: rgba(15, 26, 41, 0.9);
+}
+
+.stack-shortcut strong {
+  color: #f6fbff;
+}
+
+.stack-shortcut span {
+  color: rgba(176, 201, 220, 0.8);
+  font-size: 0.92rem;
+  line-height: 1.4;
 }
 
 .stack-grid span,
@@ -189,7 +246,8 @@
   }
 
   .panel__header,
-  .history-item__header {
+  .history-item__header,
+  .stack-shortcuts__header {
     flex-direction: column;
   }
 

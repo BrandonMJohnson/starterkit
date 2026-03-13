@@ -1,10 +1,18 @@
-import { propagation, context, trace, SpanStatusCode } from '@opentelemetry/api'
+import { propagation, context, trace, SpanKind, SpanStatusCode } from '@opentelemetry/api'
 import { W3CTraceContextPropagator } from '@opentelemetry/core'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
+import { resourceFromAttributes } from '@opentelemetry/resources'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { WebTracerProvider } from '@opentelemetry/sdk-trace-web'
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 
 let initialized = false
+const FRONTEND_SERVICE_NAME = 'starterkit-ui'
+const headersSetter = {
+  set(carrier: Headers, key: string, value: string) {
+    carrier.set(key, value)
+  },
+}
 
 export async function initializeApiTracing(): Promise<void> {
   if (initialized) {
@@ -17,6 +25,9 @@ export async function initializeApiTracing(): Promise<void> {
   }
 
   const provider = new WebTracerProvider({
+    resource: resourceFromAttributes({
+      [ATTR_SERVICE_NAME]: FRONTEND_SERVICE_NAME,
+    }),
     spanProcessors: [new BatchSpanProcessor(new OTLPTraceExporter({ url: endpoint }))],
   })
   provider.register({
@@ -33,27 +44,33 @@ export async function initializeApiTracing(): Promise<void> {
       return originalFetch(input, init)
     }
 
-    const span = tracer.startSpan(`${method} ${path}`)
-    try {
-      const headers = new Headers(init?.headers || {})
-      propagation.inject(trace.setSpan(context.active(), span), headers)
-      const response = await originalFetch(input, {
-        ...(init || {}),
-        headers,
-      })
-      span.setAttribute('http.method', method)
-      span.setAttribute('http.target', path)
-      span.setAttribute('http.status_code', response.status)
-      if (!response.ok) {
-        span.setStatus({ code: SpanStatusCode.ERROR })
+    return tracer.startActiveSpan(`${method} ${path}`, {
+      kind: SpanKind.CLIENT,
+      attributes: {
+        'http.method': method,
+        'http.target': path,
+      },
+    }, async (span) => {
+      try {
+        const headers = new Headers(init?.headers || {})
+        const spanContext = trace.setSpan(context.active(), span)
+        propagation.inject(spanContext, headers, headersSetter)
+        const response = await originalFetch(input, {
+          ...(init || {}),
+          headers,
+        })
+        span.setAttribute('http.status_code', response.status)
+        if (!response.ok) {
+          span.setStatus({ code: SpanStatusCode.ERROR })
+        }
+        return response
+      } catch (error) {
+        span.setStatus({ code: SpanStatusCode.ERROR, message: String(error) })
+        throw error
+      } finally {
+        span.end()
       }
-      return response
-    } catch (error) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: String(error) })
-      throw error
-    } finally {
-      span.end()
-    }
+    })
   }
 
   initialized = true
