@@ -8,6 +8,8 @@ At the start of a new thread in this repository, read these files before proposi
 2. `/Users/brandonjohnson/SourceCode/StarterKit/docs/status.md`
 3. `/Users/brandonjohnson/SourceCode/StarterKit/docs/patterns.md`
 4. `/Users/brandonjohnson/SourceCode/StarterKit/docs/interviews/README.md`
+5. `/Users/brandonjohnson/SourceCode/StarterKit/docs/tools.md`
+6. `/Users/brandonjohnson/SourceCode/StarterKit/docs/git-workflow.md`
 
 Purpose:
 
@@ -15,6 +17,11 @@ Purpose:
 - see the documented reusable patterns
 - recover the current implementation focus
 - preserve the interview-first workflow for new domains
+- apply the intended MCP and tool usage for this repo
+- apply the intended git workflow for this repo
+
+Tool-specific guidance lives in `/Users/brandonjohnson/SourceCode/StarterKit/docs/tools.md`.
+Git workflow guidance lives in `/Users/brandonjohnson/SourceCode/StarterKit/docs/git-workflow.md`.
 
 ## Interview-First Rule
 
@@ -57,10 +64,15 @@ After the interview:
 - Prefer narrow tests that prove the changed behavior.
 - For cross-service changes, run the affected Gradle tasks and the frontend build when practical.
 
+## Git Workflow
+
+Follow `/Users/brandonjohnson/SourceCode/StarterKit/docs/git-workflow.md` for branch naming, commit discipline, and close-out expectations.
+
 ## Close-Out
 
 Before finishing a meaningful pass:
 
 1. Check `git status --short`.
-2. Keep docs current if the platform contract changed.
-3. State what you verified and what remains unverified.
+2. Follow `/Users/brandonjohnson/SourceCode/StarterKit/docs/git-workflow.md`.
+3. Keep docs current if the platform contract changed.
+4. State what you verified and what remains unverified.
