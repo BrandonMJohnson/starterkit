@@ -14,11 +14,14 @@ Use tools to tighten execution, not to replace the repo docs. For this project, 
 - Start with the repo docs and the exact code you need.
 - Use MCP tools when they materially improve reasoning, retrieval, or cross-thread continuity.
 - Prefer small, targeted tool usage over broad scans.
+- When a stable repo convention or user workflow preference is likely to matter in later turns, capture it in Memory unless the repo docs already cover it well enough.
 - Store durable project knowledge in one place. Do not duplicate the same fact across repo docs, Memory, and ad hoc notes unless there is a clear resume benefit.
 
 ## sequential-thinking
 
 Use `sequential-thinking` when the task needs structured reasoning before acting.
+
+Default to using it for non-trivial planning, debugging, or design decisions where the sequence of decisions materially affects the result.
 
 ### Use For
 
@@ -39,6 +42,7 @@ Use `sequential-thinking` when the task needs structured reasoning before acting
 
 - Make reasoning explicit before changing shared platform seams.
 - Use it to reduce design drift when adapting patterns from Aviation.
+- Use it when debugging or planning crosses service boundaries, even if the final implementation step is small.
 - Return the synthesized conclusion, not the intermediate reasoning, unless the user asks for it.
 
 ## Memory
@@ -69,6 +73,7 @@ Store only durable facts that are useful across threads, such as:
 - cross-service integration constraints
 - domain interview conclusions that affect the first implementation slice
 - project conventions that are easy to forget and not yet documented elsewhere
+- durable user workflow preferences that affect how work should be approached in this repo
 
 Prefer a small graph shape:
 
@@ -88,6 +93,7 @@ Prefer a small graph shape:
 
 - Keep Memory lean. StarterKit is intentionally small, so the graph should stay small too.
 - Use Memory to preserve cross-thread continuity, not as a second `docs/status.md`.
+- Prefer storing stable process expectations there when they are not yet reflected in repo docs.
 - If repo docs and Memory disagree, treat the repo docs as the execution source of truth until reconciled.
 
 ## Browser Automation

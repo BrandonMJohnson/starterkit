@@ -67,6 +67,7 @@ After the interview:
 ## Git Workflow
 
 Follow `/Users/brandonjohnson/SourceCode/StarterKit/docs/git-workflow.md` for branch naming, commit discipline, and close-out expectations.
+By default, commit each completed logical unit of work unless the user explicitly asks to defer commits.
 
 ## Close-Out
 
@@ -74,5 +75,6 @@ Before finishing a meaningful pass:
 
 1. Check `git status --short`.
 2. Follow `/Users/brandonjohnson/SourceCode/StarterKit/docs/git-workflow.md`.
-3. Keep docs current if the platform contract changed.
-4. State what you verified and what remains unverified.
+3. Commit the completed logical unit unless the user asked not to.
+4. Keep docs current if the platform contract changed.
+5. State what you verified and what remains unverified.
