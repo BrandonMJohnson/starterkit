@@ -1,6 +1,6 @@
 package net.mudpot.starterkit.apiservice.session;
 
-public record AnonymousSessionResponse(
+public record SessionResponse(
     String sessionId,
     String actorKind,
     String issuedAt

@@ -1,7 +1,7 @@
 package starterkit.authz
 
 test_run_allowed if {
-  allow with input as {"action": "workflow.hello_world.run"}
+  allow with input as {"action": "api.hello_world.run"}
 }
 
 test_execute_allowed_for_valid_use_case if {

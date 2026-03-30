@@ -8,27 +8,25 @@ import io.micronaut.http.annotation.Filter;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.filter.ServerFilterPhase;
+import net.mudpot.starterkit.commons.session.Session;
 import org.reactivestreams.Publisher;
 
 @Filter("/api/**")
-public class AnonymousSessionFilter implements HttpServerFilter, Ordered {
-    private final AnonymousSessionResolver anonymousSessionResolver;
-    private final AnonymousSessionService anonymousSessionService;
+public class SessionFilter implements HttpServerFilter, Ordered {
+    private final SessionResolver sessionResolver;
+    private final SessionService sessionService;
 
-    public AnonymousSessionFilter(
-        final AnonymousSessionResolver anonymousSessionResolver,
-        final AnonymousSessionService anonymousSessionService
-    ) {
-        this.anonymousSessionResolver = anonymousSessionResolver;
-        this.anonymousSessionService = anonymousSessionService;
+    public SessionFilter(final SessionResolver sessionResolver, final SessionService sessionService) {
+        this.sessionResolver = sessionResolver;
+        this.sessionService = sessionService;
     }
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(final HttpRequest<?> request, final ServerFilterChain chain) {
-        final AnonymousSession session = anonymousSessionResolver.resolve(request);
+        final Session session = sessionResolver.resolve(request);
         return Publishers.map(chain.proceed(request), response -> {
             if (session.fresh()) {
-                response.cookie(anonymousSessionService.sessionCookie(session));
+                response.cookie(sessionService.sessionCookie(session));
             }
             return response;
         });

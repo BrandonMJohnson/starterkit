@@ -3,7 +3,7 @@ package net.mudpot.starterkit.apiservice.policy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpRequest;
 import jakarta.inject.Singleton;
-import net.mudpot.starterkit.apiservice.session.AnonymousSession;
+import net.mudpot.starterkit.commons.session.Session;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,7 +18,7 @@ public class PolicyInputFactory {
         this.objectMapper = objectMapper;
     }
 
-    public Map<String, Object> build(final HttpRequest<?> request, final AnonymousSession session) {
+    public Map<String, Object> build(final HttpRequest<?> request, final Session session) {
         final Map<String, Object> input = new LinkedHashMap<>();
         input.put("actor", Map.of(
             "kind", session.actorKind(),

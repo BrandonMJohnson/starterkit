@@ -44,7 +44,7 @@ class PolicyServiceClientTest {
         );
 
         final PolicyEvaluationResult result = client.evaluate(new PolicyEvaluationRequest(
-            "workflow.hello_world.run",
+            "api.hello_world.run",
             Map.of("resource", Map.of("type", "hello-world"))
         ));
 

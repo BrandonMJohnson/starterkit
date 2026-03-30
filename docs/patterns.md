@@ -45,7 +45,8 @@
 
 - Services do not embed authorization logic directly in controllers when a reusable decision can live in OPA.
 - API controller methods declare policy requirements through a reusable Micronaut annotation/interceptor seam.
-- Request/session context should be resolved at the Micronaut HTTP boundary and consumed from request context, not rebuilt ad hoc inside individual controllers.
+- Keep API ingress actions in an `api.*` namespace and workflow-side business-rule actions in a `workflow.*` namespace so those boundaries do not blur together.
+- Session state should be resolved at the Micronaut HTTP boundary and injected into controller methods through typed request argument binding, not rebuilt ad hoc inside individual controllers.
 - API calls `policy-service`.
 - `policy-service` delegates to OPA.
 - Workflows can call `policy-service` through a dedicated Temporal activity when policy-evaluable business rules belong inside orchestration rather than only at API ingress.
@@ -54,8 +55,9 @@
 ## Session Pattern
 
 - StarterKit ships with anonymous sessions even though it does not ship a login system.
+- The portable `Session` value object lives in `libraries/commons`; API-only cookie, binding, and resolution mechanics stay in `api-service`.
 - `api-service` owns the session cookie and exposes `/api/session` for bootstrap.
-- Anonymous session resolution belongs at the Micronaut HTTP boundary via filter/request context, not as repeated controller helper logic.
+- Session resolution belongs at the Micronaut HTTP boundary via filter plus typed request argument binding, not as repeated controller helper logic.
 - Policy input should use session-backed actor context instead of controller-local hard-coded identities.
 - Real authentication can replace or enrich the anonymous actor later without changing every endpoint contract first.
 

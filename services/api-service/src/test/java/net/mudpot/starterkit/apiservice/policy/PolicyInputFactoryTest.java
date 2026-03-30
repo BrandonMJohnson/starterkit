@@ -2,8 +2,8 @@ package net.mudpot.starterkit.apiservice.policy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpRequest;
-import net.mudpot.starterkit.apiservice.session.AnonymousSession;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldRequest;
+import net.mudpot.starterkit.commons.session.Session;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -24,7 +24,7 @@ class PolicyInputFactoryTest {
 
         final Map<String, Object> input = policyInputFactory.build(
             request,
-            new AnonymousSession("anon-session-1", "anonymous", Instant.parse("2026-03-12T00:00:00Z"), false)
+            new Session("anon-session-1", "anonymous", Instant.parse("2026-03-12T00:00:00Z"), false)
         );
 
         final Map<?, ?> actor = assertInstanceOf(Map.class, input.get("actor"));

@@ -6,16 +6,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.Instant;
+import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public final class AnonymousSessionCodec {
+public final class SessionCodec {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private AnonymousSessionCodec() {
+    private SessionCodec() {
     }
 
     public static String sign(final Map<String, Object> payload, final String secret) {
@@ -28,7 +28,7 @@ public final class AnonymousSessionCodec {
             final byte[] signature = hmacSha256(payloadToken, normalizedSecret);
             return payloadToken + "." + base64Url(signature);
         } catch (final Exception exception) {
-            throw new IllegalStateException("Failed signing anonymous session.", exception);
+            throw new IllegalStateException("Failed signing session.", exception);
         }
     }
 
@@ -56,7 +56,7 @@ public final class AnonymousSessionCodec {
     private static String normalizeSecret(final String secret) {
         final String normalizedSecret = secret == null ? "" : secret.trim();
         if (normalizedSecret.isBlank()) {
-            throw new IllegalStateException("ANON_SESSION_SIGNING_SECRET is required.");
+            throw new IllegalStateException("Session signing secret is required.");
         }
         return normalizedSecret;
     }

@@ -3,24 +3,25 @@ package net.mudpot.starterkit.apiservice.session;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.cookie.Cookie;
 import jakarta.inject.Singleton;
+import net.mudpot.starterkit.commons.session.Session;
 
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
 @Singleton
-public class AnonymousSessionResolver {
+public class SessionResolver {
     private static final String DEFAULT_ACTOR_KIND = "anonymous";
-    private static final String REQUEST_ATTRIBUTE = AnonymousSessionResolver.class.getName() + ".session";
+    private static final String REQUEST_ATTRIBUTE = SessionResolver.class.getName() + ".session";
 
-    private final AnonymousSessionConfig config;
+    private final SessionConfig config;
 
-    public AnonymousSessionResolver(final AnonymousSessionConfig config) {
+    public SessionResolver(final SessionConfig config) {
         this.config = config;
     }
 
-    public AnonymousSession resolve(final HttpRequest<?> request) {
-        final AnonymousSession existing = request.getAttribute(REQUEST_ATTRIBUTE, AnonymousSession.class).orElse(null);
+    public Session resolve(final HttpRequest<?> request) {
+        final Session existing = request.getAttribute(REQUEST_ATTRIBUTE, Session.class).orElse(null);
         if (existing != null) {
             return existing;
         }
@@ -28,13 +29,13 @@ public class AnonymousSessionResolver {
         final String rawToken = request.getCookies().findCookie(config.cookieName())
             .map(Cookie::getValue)
             .orElse("");
-        final Map<String, Object> payload = AnonymousSessionCodec.verifyAndParse(rawToken, config.signingSecret());
+        final Map<String, Object> payload = SessionCodec.verifyAndParse(rawToken, config.signingSecret());
         final String sessionId = stringValue(payload.get("session_id"));
         final Instant issuedAt = parseInstant(payload.get("issued_at"));
         final String actorKind = stringValue(payload.get("actor_kind"));
-        final AnonymousSession session = !sessionId.isBlank() && issuedAt != null
-            ? new AnonymousSession(sessionId, actorKind.isBlank() ? DEFAULT_ACTOR_KIND : actorKind, issuedAt, false)
-            : new AnonymousSession(UUID.randomUUID().toString(), DEFAULT_ACTOR_KIND, Instant.now(), true);
+        final Session session = !sessionId.isBlank() && issuedAt != null
+            ? new Session(sessionId, actorKind.isBlank() ? DEFAULT_ACTOR_KIND : actorKind, issuedAt, false)
+            : new Session(UUID.randomUUID().toString(), DEFAULT_ACTOR_KIND, Instant.now(), true);
         request.setAttribute(REQUEST_ATTRIBUTE, session);
         return session;
     }

@@ -19,5 +19,6 @@ micronaut:
 policy:
   service-url: http://localhost:8082
 
-anon-session:
-  signing-secret: starterkit-local-anon-session-secret
+starterkit:
+  session:
+    signing-secret: ${STARTERKIT_SESSION_SIGNING_SECRET:starterkit-local-session-secret}

@@ -1,32 +1,21 @@
 package net.mudpot.starterkit.apiservice.controllers;
 
-import io.micronaut.context.BeanProvider;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
-import net.mudpot.starterkit.apiservice.session.AnonymousSession;
-import net.mudpot.starterkit.apiservice.session.AnonymousSessionContext;
-import net.mudpot.starterkit.apiservice.session.AnonymousSessionResolver;
-import net.mudpot.starterkit.apiservice.session.AnonymousSessionResponse;
-import net.mudpot.starterkit.apiservice.session.AnonymousSessionService;
+import net.mudpot.starterkit.apiservice.session.SessionResponse;
+import net.mudpot.starterkit.apiservice.session.SessionService;
+import net.mudpot.starterkit.commons.session.Session;
 
 @Controller("/api/session")
 public class SessionController {
-    private final BeanProvider<AnonymousSessionContext> anonymousSessionContext;
-    private final AnonymousSessionService anonymousSessionService;
+    private final SessionService sessionService;
 
-    public SessionController(
-        final BeanProvider<AnonymousSessionContext> anonymousSessionContext,
-        final AnonymousSessionService anonymousSessionService
-    ) {
-        this.anonymousSessionContext = anonymousSessionContext;
-        this.anonymousSessionService = anonymousSessionService;
+    public SessionController(final SessionService sessionService) {
+        this.sessionService = sessionService;
     }
 
     @Get
-    public MutableHttpResponse<AnonymousSessionResponse> currentSession() {
-        final AnonymousSession session = anonymousSessionContext.get().session();
-        return HttpResponse.ok(anonymousSessionService.toResponse(session));
+    public SessionResponse currentSession(final Session session) {
+        return sessionService.toResponse(session);
     }
 }

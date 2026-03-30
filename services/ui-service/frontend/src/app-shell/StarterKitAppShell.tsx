@@ -1,9 +1,9 @@
 import { HelloHistoryPanel, HelloWorkflowPanel, useHelloWorldDashboard } from '../features/hello-world'
 import { useUiRuntimeConfigQuery } from '../features/runtime/runtimeConfigQueries'
-import { useAnonymousSessionQuery } from '../features/session/sessionQueries'
+import { useSessionQuery } from '../features/session/sessionQueries'
 
 export function StarterKitAppShell() {
-  const sessionQuery = useAnonymousSessionQuery()
+  const sessionQuery = useSessionQuery()
   const uiRuntimeConfigQuery = useUiRuntimeConfigQuery()
   const helloWorldDashboard = useHelloWorldDashboard()
 
@@ -22,7 +22,7 @@ export function StarterKitAppShell() {
           <div className="session-chip">
             {sessionQuery.data ? (
               <>
-                <span>anon session</span>
+                <span>session</span>
                 <strong>{sessionQuery.data.sessionId.slice(0, 8)}</strong>
               </>
             ) : (

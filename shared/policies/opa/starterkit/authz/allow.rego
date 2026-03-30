@@ -2,9 +2,9 @@ package starterkit.authz
 
 default allow := false
 allowed_actions := {
-  "workflow.hello_world.run",
-  "workflow.hello_world.start",
-  "workflow.hello_world.history",
+  "api.hello_world.run",
+  "api.hello_world.start",
+  "api.hello_world.history",
 }
 
 normalized_action := lower(trim_space(object.get(input, "action", "")))

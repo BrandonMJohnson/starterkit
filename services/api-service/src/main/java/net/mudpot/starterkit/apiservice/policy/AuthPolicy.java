@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Around
-@Type(RequirePolicyInterceptor.class)
-public @interface RequirePolicy {
+@Type(AuthPolicyInterceptor.class)
+public @interface AuthPolicy {
     String value();
 }

@@ -23,7 +23,7 @@ class OpaSidecarClientTest {
         final OpaSidecarClient client = new OpaSidecarClient(new ObjectMapper(), httpClient);
 
         final PolicyEvaluationResult result = client.evaluate(new PolicyEvaluationRequest(
-            "workflow.hello_world.run",
+            "api.hello_world.run",
             Map.of("name", "Builder")
         ));
 

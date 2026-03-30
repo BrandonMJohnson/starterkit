@@ -1,12 +1,9 @@
 package net.mudpot.starterkit.apiservice.controllers;
 
-import io.micronaut.http.HttpRequest;
-import io.micronaut.context.BeanProvider;
-import net.mudpot.starterkit.apiservice.policy.RequirePolicy;
-import net.mudpot.starterkit.apiservice.session.AnonymousSession;
-import net.mudpot.starterkit.apiservice.session.AnonymousSessionContext;
+import net.mudpot.starterkit.apiservice.policy.AuthPolicy;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldRequest;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldResult;
+import net.mudpot.starterkit.commons.session.Session;
 import net.mudpot.starterkit.orchestrationclients.model.WorkflowStartResponse;
 import net.mudpot.starterkit.orchestrationclients.system.HelloWorldWorkflowClient;
 import net.mudpot.starterkit.persistence.history.HelloHistoryQueryService;
@@ -21,39 +18,39 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class HelloWorkflowControllerTest {
+    private static final Session TEST_SESSION = new Session("anon-session-1", "anonymous", Instant.parse("2026-03-12T00:00:00Z"), false);
+
     @Test
-    void runUsesWorkflowClientAndAnonymousSession() {
+    void runUsesWorkflowClientAndSession() {
         final StubHelloWorldWorkflowClient client = new StubHelloWorldWorkflowClient();
         client.runResponse = new HelloWorldResult("wf-1", "starter_hello_v1", "Hello there.", "openai-compatible", "demo", Map.of(), Map.of(), Instant.parse("2026-03-12T00:00:00Z"));
         final HelloWorkflowController controller = new HelloWorkflowController(
             client,
-            new StubHelloHistoryQueryService(),
-            anonymousSessionContext()
+            new StubHelloHistoryQueryService()
         );
 
         final HelloWorldResult response = controller.run(
-            new HelloWorldRequest("Brandon", "Build a club operations platform.", "")
-        ).body();
+            new HelloWorldRequest("Brandon", "Build a club operations platform.", ""),
+            TEST_SESSION
+        );
 
-        assertEquals("Brandon", client.runName);
-        assertEquals("Build a club operations platform.", client.runUseCase);
-        assertEquals("anonymous", client.runActorKind);
-        assertEquals("anon-session-1", client.runSessionId);
+        assertEquals("Brandon", client.runRequest.name());
+        assertEquals("Build a club operations platform.", client.runRequest.useCase());
+        assertEquals("anonymous", client.runSession.actorKind());
+        assertEquals("anon-session-1", client.runSession.sessionId());
         assertEquals("Hello there.", response.greeting());
     }
 
     @Test
     void methodsDeclareRecoveredPolicyAnnotations() throws Exception {
-        assertPolicyAction("run", "workflow.hello_world.run", HelloWorldRequest.class);
-        assertPolicyAction("start", "workflow.hello_world.start", HelloWorldRequest.class);
-        assertPolicyAction("history", "workflow.hello_world.history", int.class);
+        assertPolicyAction("run", "api.hello_world.run", HelloWorldRequest.class, Session.class);
+        assertPolicyAction("start", "api.hello_world.start", HelloWorldRequest.class, Session.class);
+        assertPolicyAction("history", "api.hello_world.history", int.class, Session.class);
     }
 
     private static final class StubHelloWorldWorkflowClient extends HelloWorldWorkflowClient {
-        private String runName;
-        private String runUseCase;
-        private String runActorKind;
-        private String runSessionId;
+        private HelloWorldRequest runRequest;
+        private Session runSession;
         private HelloWorldResult runResponse;
 
         private StubHelloWorldWorkflowClient() {
@@ -61,22 +58,14 @@ class HelloWorkflowControllerTest {
         }
 
         @Override
-        public HelloWorldResult run(final String name, final String useCase, final String actorKind, final String sessionId) {
-            this.runName = name;
-            this.runUseCase = useCase;
-            this.runActorKind = actorKind;
-            this.runSessionId = sessionId;
+        public HelloWorldResult run(final HelloWorldRequest request, final Session session) {
+            this.runRequest = request;
+            this.runSession = session;
             return runResponse;
         }
 
         @Override
-        public WorkflowStartResponse start(
-            final String name,
-            final String useCase,
-            final String workflowId,
-            final String actorKind,
-            final String sessionId
-        ) {
+        public WorkflowStartResponse start(final HelloWorldRequest request, final Session session) {
             return new WorkflowStartResponse("HelloWorldWorkflow", "wf-1", "hello-world-task-queue", "run-1");
         }
     }
@@ -92,27 +81,13 @@ class HelloWorkflowControllerTest {
         }
     }
 
-    private static BeanProvider<AnonymousSessionContext> anonymousSessionContext() {
-        return new BeanProvider<>() {
-            @Override
-            public AnonymousSessionContext get() {
-                return new AnonymousSessionContext(null) {
-                    @Override
-                    public AnonymousSession session() {
-                        return new AnonymousSession("anon-session-1", "anonymous", Instant.parse("2026-03-12T00:00:00Z"), false);
-                    }
-                };
-            }
-        };
-    }
-
     private static void assertPolicyAction(
         final String methodName,
         final String expectedAction,
         final Class<?>... parameterTypes
     ) throws NoSuchMethodException {
         final Method method = HelloWorkflowController.class.getMethod(methodName, parameterTypes);
-        final RequirePolicy annotation = method.getAnnotation(RequirePolicy.class);
+        final AuthPolicy annotation = method.getAnnotation(AuthPolicy.class);
         assertNotNull(annotation);
         assertEquals(expectedAction, annotation.value());
     }
