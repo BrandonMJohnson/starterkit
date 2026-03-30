@@ -1,44 +1,37 @@
 package net.mudpot.starterkit.apiservice.controllers;
 
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.context.BeanProvider;
+import net.mudpot.starterkit.apiservice.policy.RequirePolicy;
 import net.mudpot.starterkit.apiservice.session.AnonymousSession;
-import net.mudpot.starterkit.apiservice.session.AnonymousSessionConfig;
-import net.mudpot.starterkit.apiservice.session.AnonymousSessionService;
+import net.mudpot.starterkit.apiservice.session.AnonymousSessionContext;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldRequest;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldResult;
-import net.mudpot.starterkit.commons.policy.PolicyEvaluationRequest;
-import net.mudpot.starterkit.commons.policy.PolicyEvaluationResult;
-import net.mudpot.starterkit.commons.policy.PolicyEvaluator;
 import net.mudpot.starterkit.orchestrationclients.model.WorkflowStartResponse;
 import net.mudpot.starterkit.orchestrationclients.system.HelloWorldWorkflowClient;
 import net.mudpot.starterkit.persistence.history.HelloHistoryQueryService;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class HelloWorkflowControllerTest {
     @Test
-    void runUsesWorkflowClientWhenPolicyAllows() {
+    void runUsesWorkflowClientAndAnonymousSession() {
         final StubHelloWorldWorkflowClient client = new StubHelloWorldWorkflowClient();
-        final CapturingPolicyEvaluator policyEvaluator = new CapturingPolicyEvaluator();
         client.runResponse = new HelloWorldResult("wf-1", "starter_hello_v1", "Hello there.", "openai-compatible", "demo", Map.of(), Map.of(), Instant.parse("2026-03-12T00:00:00Z"));
         final HelloWorkflowController controller = new HelloWorkflowController(
             client,
             new StubHelloHistoryQueryService(),
-            new StubAnonymousSessionService(),
-            policyEvaluator
+            anonymousSessionContext()
         );
 
         final HelloWorldResult response = controller.run(
-            HttpRequest.POST("/api/workflows/hello-world/run", Map.of()),
             new HelloWorldRequest("Brandon", "Build a club operations platform.", "")
         ).body();
 
@@ -47,24 +40,13 @@ class HelloWorkflowControllerTest {
         assertEquals("anonymous", client.runActorKind);
         assertEquals("anon-session-1", client.runSessionId);
         assertEquals("Hello there.", response.greeting());
-        assertEquals("anon-session-1", ((Map<?, ?>) policyEvaluator.lastRequest.input()).get("actor") instanceof Map<?, ?> actor ? actor.get("session_id") : "");
     }
 
     @Test
-    void historyRejectsDeniedPolicy() {
-        final HelloWorkflowController controller = new HelloWorkflowController(
-            new StubHelloWorldWorkflowClient(),
-            new StubHelloHistoryQueryService(),
-            new StubAnonymousSessionService(),
-            request -> new PolicyEvaluationResult(false, "denied", "starterkit.v1")
-        );
-
-        final HttpStatusException exception = assertThrows(
-            HttpStatusException.class,
-            () -> controller.history(HttpRequest.GET("/api/workflows/hello-world/history?limit=10"), 10)
-        );
-
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
+    void methodsDeclareRecoveredPolicyAnnotations() throws Exception {
+        assertPolicyAction("run", "workflow.hello_world.run", HelloWorldRequest.class);
+        assertPolicyAction("start", "workflow.hello_world.start", HelloWorldRequest.class);
+        assertPolicyAction("history", "workflow.hello_world.history", int.class);
     }
 
     private static final class StubHelloWorldWorkflowClient extends HelloWorldWorkflowClient {
@@ -99,18 +81,6 @@ class HelloWorkflowControllerTest {
         }
     }
 
-    private static final class StubAnonymousSessionService extends AnonymousSessionService {
-        private StubAnonymousSessionService() {
-            super(new AnonymousSessionConfig() {
-            });
-        }
-
-        @Override
-        public AnonymousSession ensureSession(final HttpRequest<?> request) {
-            return new AnonymousSession("anon-session-1", "anonymous", Instant.parse("2026-03-12T00:00:00Z"), false);
-        }
-    }
-
     private static final class StubHelloHistoryQueryService extends HelloHistoryQueryService {
         private StubHelloHistoryQueryService() {
             super(null);
@@ -122,13 +92,25 @@ class HelloWorkflowControllerTest {
         }
     }
 
-    private static final class CapturingPolicyEvaluator implements PolicyEvaluator {
-        private PolicyEvaluationRequest lastRequest;
+    private static BeanProvider<AnonymousSessionContext> anonymousSessionContext() {
+        return new BeanProvider<>() {
+            @Override
+            public AnonymousSessionContext get() {
+                return new AnonymousSessionContext(
+                    new AnonymousSession("anon-session-1", "anonymous", Instant.parse("2026-03-12T00:00:00Z"), false)
+                );
+            }
+        };
+    }
 
-        @Override
-        public PolicyEvaluationResult evaluate(final PolicyEvaluationRequest request) {
-            this.lastRequest = request;
-            return new PolicyEvaluationResult(true, "allowed", "starterkit.v1");
-        }
+    private static void assertPolicyAction(
+        final String methodName,
+        final String expectedAction,
+        final Class<?>... parameterTypes
+    ) throws NoSuchMethodException {
+        final Method method = HelloWorkflowController.class.getMethod(methodName, parameterTypes);
+        final RequirePolicy annotation = method.getAnnotation(RequirePolicy.class);
+        assertNotNull(annotation);
+        assertEquals(expectedAction, annotation.value());
     }
 }

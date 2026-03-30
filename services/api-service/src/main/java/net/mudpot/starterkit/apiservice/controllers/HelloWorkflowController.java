@@ -1,105 +1,67 @@
 package net.mudpot.starterkit.apiservice.controllers;
 
 import io.micronaut.http.HttpStatus;
+import io.micronaut.context.BeanProvider;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
-import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import net.mudpot.starterkit.apiservice.policy.RequirePolicy;
 import net.mudpot.starterkit.apiservice.session.AnonymousSession;
-import net.mudpot.starterkit.apiservice.session.AnonymousSessionService;
+import net.mudpot.starterkit.apiservice.session.AnonymousSessionContext;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloHistoryEntry;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldRequest;
 import net.mudpot.starterkit.commons.orchestration.system.model.HelloWorldResult;
-import net.mudpot.starterkit.commons.policy.PolicyEvaluationRequest;
-import net.mudpot.starterkit.commons.policy.PolicyEvaluationResult;
-import net.mudpot.starterkit.commons.policy.PolicyEvaluator;
 import net.mudpot.starterkit.orchestrationclients.model.WorkflowStartResponse;
 import net.mudpot.starterkit.orchestrationclients.system.HelloWorldWorkflowClient;
 import net.mudpot.starterkit.persistence.history.HelloHistoryQueryService;
 
 import java.util.List;
-import java.util.Map;
 
 @Controller("/api/workflows/hello-world")
 @ExecuteOn(TaskExecutors.BLOCKING)
 public class HelloWorkflowController {
     private final HelloWorldWorkflowClient helloWorldWorkflowClient;
     private final HelloHistoryQueryService helloHistoryQueryService;
-    private final AnonymousSessionService anonymousSessionService;
-    private final PolicyEvaluator policyEvaluator;
+    private final BeanProvider<AnonymousSessionContext> anonymousSessionContext;
 
     public HelloWorkflowController(
         final HelloWorldWorkflowClient helloWorldWorkflowClient,
         final HelloHistoryQueryService helloHistoryQueryService,
-        final AnonymousSessionService anonymousSessionService,
-        final PolicyEvaluator policyEvaluator
+        final BeanProvider<AnonymousSessionContext> anonymousSessionContext
     ) {
         this.helloWorldWorkflowClient = helloWorldWorkflowClient;
         this.helloHistoryQueryService = helloHistoryQueryService;
-        this.anonymousSessionService = anonymousSessionService;
-        this.policyEvaluator = policyEvaluator;
+        this.anonymousSessionContext = anonymousSessionContext;
     }
 
     @Post("/run")
-    public MutableHttpResponse<HelloWorldResult> run(final HttpRequest<?> httpRequest, @Body final HelloWorldRequest request) {
+    @RequirePolicy("workflow.hello_world.run")
+    public HttpResponse<HelloWorldResult> run(@Body final HelloWorldRequest request) {
         final HelloWorldRequest normalized = normalizedRequest(request);
-        final AnonymousSession session = anonymousSessionService.ensureSession(httpRequest);
-        requirePolicy("workflow.hello_world.run", normalized, session);
-        return anonymousSessionService.attachCookieIfNeeded(
-            HttpResponse.ok(helloWorldWorkflowClient.run(normalized.name(), normalized.useCase(), session.actorKind(), session.sessionId())),
-            session
-        );
+        final AnonymousSession session = anonymousSessionContext.get().session();
+        return HttpResponse.ok(helloWorldWorkflowClient.run(normalized.name(), normalized.useCase(), session.actorKind(), session.sessionId()));
     }
 
     @Post("/start")
-    public MutableHttpResponse<WorkflowStartResponse> start(final HttpRequest<?> httpRequest, @Body final HelloWorldRequest request) {
+    @RequirePolicy("workflow.hello_world.start")
+    public HttpResponse<WorkflowStartResponse> start(@Body final HelloWorldRequest request) {
         final HelloWorldRequest normalized = normalizedRequest(request);
-        final AnonymousSession session = anonymousSessionService.ensureSession(httpRequest);
-        requirePolicy("workflow.hello_world.start", normalized, session);
-        return anonymousSessionService.attachCookieIfNeeded(
-            HttpResponse.ok(helloWorldWorkflowClient.start(normalized.name(), normalized.useCase(), normalized.workflowId(), session.actorKind(), session.sessionId())),
-            session
-        );
+        final AnonymousSession session = anonymousSessionContext.get().session();
+        return HttpResponse.ok(helloWorldWorkflowClient.start(normalized.name(), normalized.useCase(), normalized.workflowId(), session.actorKind(), session.sessionId()));
     }
 
     @Get("/history")
-    public MutableHttpResponse<List<HelloHistoryEntry>> history(final HttpRequest<?> httpRequest, @QueryValue(defaultValue = "12") final int limit) {
+    @RequirePolicy("workflow.hello_world.history")
+    public HttpResponse<List<HelloHistoryEntry>> history(@QueryValue(defaultValue = "12") final int limit) {
         final int resolvedLimit = Math.max(1, Math.min(limit, 50));
-        final AnonymousSession session = anonymousSessionService.ensureSession(httpRequest);
-        requirePolicy("workflow.hello_world.history", null, session);
-        return anonymousSessionService.attachCookieIfNeeded(
-            HttpResponse.ok(helloHistoryQueryService.recent(resolvedLimit)),
-            session
-        );
-    }
-
-    private void requirePolicy(final String action, final HelloWorldRequest request, final AnonymousSession session) {
-        final Map<String, Object> actor = Map.of(
-            "kind", session.actorKind(),
-            "session_id", session.sessionId()
-        );
-        final Map<String, Object> input = request == null
-            ? Map.of(
-                "actor", actor,
-                "resource", Map.of("type", "hello-world", "scope", "history")
-            )
-            : Map.of(
-                "actor", actor,
-                "resource", Map.of("type", "hello-world", "scope", "workflow"),
-                "name", request.name(),
-                "use_case", request.useCase()
-            );
-        final PolicyEvaluationResult result = policyEvaluator.evaluate(new PolicyEvaluationRequest(action, input));
-        if (!result.allowed()) {
-            throw new HttpStatusException(HttpStatus.FORBIDDEN, "Policy denied: " + result.reason());
-        }
+        anonymousSessionContext.get().session();
+        return HttpResponse.ok(helloHistoryQueryService.recent(resolvedLimit));
     }
 
     private static HelloWorldRequest normalizedRequest(final HelloWorldRequest request) {

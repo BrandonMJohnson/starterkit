@@ -1,6 +1,6 @@
 # StarterKit Status
 
-Last updated: 2026-03-13
+Last updated: 2026-03-29
 
 ## Current Focus
 
@@ -18,6 +18,8 @@ Last updated: 2026-03-13
 - The `hello-world` workflow is being upgraded to use prompt rendering, real LLM calls, Postgres-backed history, and OPA-gated API access.
 - The `hello-world` workflow now also carries anonymous session context into orchestration and evaluates workflow-side policy through a dedicated policy activity so business rules can live in Rego instead of only at API ingress.
 - API requests now bootstrap through a signed anonymous session cookie and `/api/session`, and policy input uses session context instead of a fixed builder actor.
+- Recovered API policy enforcement is moving back toward a reusable Micronaut-native boundary with controller annotations, an HTTP filter, and request-scoped anonymous session context.
+- Recovered frontend structure is moving back toward an app-shell plus feature-slice layout instead of a single flat `App.tsx`.
 - The default local UI path now combines baked frontend assets with a host-mounted overlay fallback so clean checkouts still boot while `build:watch` can take over immediately once frontend assets exist on disk.
 - Repo guidance is being rewritten so Codex starts with a short business-domain interview when the domain is not yet defined.
 

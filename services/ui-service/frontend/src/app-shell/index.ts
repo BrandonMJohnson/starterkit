@@ -1,0 +1,1 @@
+export { StarterKitAppShell } from './StarterKitAppShell'

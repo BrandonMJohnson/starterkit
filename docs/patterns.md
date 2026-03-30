@@ -44,6 +44,8 @@
 ## Policy Pattern
 
 - Services do not embed authorization logic directly in controllers when a reusable decision can live in OPA.
+- API controller methods declare policy requirements through a reusable Micronaut annotation/interceptor seam.
+- Request/session context should be resolved at the Micronaut HTTP boundary and consumed from request context, not rebuilt ad hoc inside individual controllers.
 - API calls `policy-service`.
 - `policy-service` delegates to OPA.
 - Workflows can call `policy-service` through a dedicated Temporal activity when policy-evaluable business rules belong inside orchestration rather than only at API ingress.
@@ -53,6 +55,7 @@
 
 - StarterKit ships with anonymous sessions even though it does not ship a login system.
 - `api-service` owns the session cookie and exposes `/api/session` for bootstrap.
+- Anonymous session resolution belongs at the Micronaut HTTP boundary via filter/request context, not as repeated controller helper logic.
 - Policy input should use session-backed actor context instead of controller-local hard-coded identities.
 - Real authentication can replace or enrich the anonymous actor later without changing every endpoint contract first.
 
@@ -64,9 +67,11 @@
 
 ## Frontend Pattern
 
-- Use a thin fetch client.
-- Put server state behind TanStack Query.
-- Keep the shell simple enough to swap in a real domain quickly.
+- Keep `src/app-shell/` for shell composition and route-level orchestration.
+- Keep domain behavior in `src/features/<slice>/` with feature-local queries, API adapters, and UI pieces.
+- Keep shared infrastructure in `src/lib/`.
+- Put server state behind TanStack Query with shared query keys instead of ad hoc inline arrays.
+- Keep test harness helpers under `src/test/` so app-level tests do not rebuild provider setup inline.
 
 ## Codex Pattern
 
