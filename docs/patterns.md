@@ -72,7 +72,7 @@
 - Keep `src/app-shell/` for shell composition and route-level orchestration.
 - Keep domain behavior in `src/features/<slice>/` with feature-local queries, API adapters, and UI pieces.
 - Keep shared infrastructure in `src/lib/`.
-- Keep the React app itself under `apps/node/starterkit-ui` and treat the Java `ui-service` as the static hosting boundary rather than the source-of-truth home for frontend code.
+- Keep the React app itself under `apps/node/starterkit-ui` and treat `apps/platform/ui-service` as the static hosting boundary rather than the source-of-truth home for frontend code.
 - Put server state behind TanStack Query with shared query keys instead of ad hoc inline arrays.
 - Keep test harness helpers under `src/test/` so app-level tests do not rebuild provider setup inline.
 

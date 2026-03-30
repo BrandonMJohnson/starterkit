@@ -17,6 +17,9 @@ project(":apps").projectDir = file("../apps")
 include(":apps:java")
 project(":apps:java").projectDir = file("../apps/java")
 
+include(":apps:platform")
+project(":apps:platform").projectDir = file("../apps/platform")
+
 include(":libs")
 project(":libs").projectDir = file("../libs")
 
@@ -41,5 +44,5 @@ project(":apps:java:orchestration").projectDir = file("../apps/java/orchestratio
 include(":apps:java:policy-service")
 project(":apps:java:policy-service").projectDir = file("../apps/java/policy-service")
 
-include(":apps:java:ui-service")
-project(":apps:java:ui-service").projectDir = file("../apps/java/ui-service")
+include(":apps:platform:ui-service")
+project(":apps:platform:ui-service").projectDir = file("../apps/platform/ui-service")

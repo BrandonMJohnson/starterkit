@@ -27,6 +27,6 @@ tasks.register("dockerBuild") {
         ":apps:java:api-service:dockerBuild",
         ":apps:java:orchestration:dockerBuild",
         ":apps:java:policy-service:dockerBuild",
-        ":apps:java:ui-service:dockerBuild"
+        ":apps:platform:ui-service:dockerBuild"
     )
 }

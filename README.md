@@ -39,6 +39,7 @@ StarterKit/
   apps/
     java/
     node/
+    platform/
   libs/
     java/
     node/
@@ -65,12 +66,12 @@ pnpm install
 3. Start the local stack:
 
 ```bash
-docker compose up --build
+docker compose -f infra/local/docker-compose.yml up --build
 ```
 
-This path now uses a root multi-stage Docker build, so Compose compiles the full Gradle project and the UI assets before assembling the runtime images.
+This path now uses the shared Docker build definitions under `infra/docker/`, so Compose compiles the full Gradle project and the UI assets before assembling the runtime images.
 
-The default local `ui-service` path also mounts `apps/java/ui-service/build/frontend-static` as an overlay when that directory contains a host build, so frontend watch output can take over without replacing the clean-checkout fallback baked into the image.
+The default local `ui-service` host path also mounts `apps/platform/ui-service/build/frontend-static` as an overlay when that directory contains a host build, so frontend watch output can take over without replacing the clean-checkout fallback baked into the image.
 
 4. Open:
 
@@ -89,6 +90,7 @@ The compose host ports are configurable through `.env` if those defaults still c
 ./java-build/gradlew -p java-build :apps:java:api-service:run
 ./java-build/gradlew -p java-build :apps:java:orchestration:run
 ./java-build/gradlew -p java-build :apps:java:policy-service:run
+./java-build/gradlew -p java-build :apps:platform:ui-service:buildFrontendAssets
 ```
 
 - Root workspace tasks:
@@ -119,7 +121,7 @@ The standalone worker listens on `hello-from-nodejs-task-queue` by default and s
 - Frontend validation through the compose-managed `nginx` container:
 
 ```bash
-docker compose up --build ui-service api-service orchestration policy-service
+docker compose -f infra/local/docker-compose.yml up --build ui-service api-service orchestration policy-service
 ```
 
 In this mode, `ui-service` serves baked image assets until a host frontend build is present, then automatically switches to the mounted overlay for fast browser refreshes.
@@ -127,13 +129,13 @@ In this mode, `ui-service` serves baked image assets until a host frontend build
 - Fast UI iteration with the default compose overlay:
 
 ```bash
-./java-build/gradlew -p java-build :apps:java:ui-service:buildFrontendAssets
-docker compose up --build ui-service api-service orchestration policy-service
+./java-build/gradlew -p java-build :apps:platform:ui-service:buildFrontendAssets
+docker compose -f infra/local/docker-compose.yml up --build ui-service api-service orchestration policy-service
 
 pnpm --filter @starterkit/starterkit-ui build:watch
 ```
 
-This keeps the containerized `nginx` path, but the mounted `apps/java/ui-service/build/frontend-static` directory takes over as soon as it contains a frontend build so browser refreshes pick up rebuilds without rebuilding the image.
+This keeps the containerized `nginx` path, but the mounted `apps/platform/ui-service/build/frontend-static` directory takes over as soon as it contains a frontend build so browser refreshes pick up rebuilds without rebuilding the image.
 
 ## Deployment Model
 

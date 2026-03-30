@@ -64,7 +64,7 @@ tasks.named('check') {
 tasks.register('dockerBuild', Exec) {
     dependsOn(tasks.named('buildFrontendAssets'))
     workingDir(workspaceRootDir)
-    commandLine('docker', 'build', '-t', imageRef, '.')
+    commandLine('docker', 'build', '-f', 'infra/docker/Dockerfile', '-t', imageRef, '.')
 }
 
 tasks.register('dockerPush', Exec) {
