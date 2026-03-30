@@ -50,7 +50,7 @@
 - API calls `policy-service`.
 - `policy-service` delegates to OPA.
 - Workflows can call `policy-service` through a dedicated Temporal activity when policy-evaluable business rules belong inside orchestration rather than only at API ingress.
-- Rego policies live under `shared/policies/opa/`.
+- Rego policies live under `apps/java/policy-service/src/main/resources/policies/opa/`.
 
 ## Session Pattern
 

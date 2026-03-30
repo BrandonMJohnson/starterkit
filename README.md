@@ -49,8 +49,7 @@ StarterKit/
     status.md
     patterns.md
     interviews/
-  shared/
-    policies/opa/
+  infra/
 ```
 
 ## Quick Start

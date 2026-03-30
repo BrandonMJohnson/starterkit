@@ -18,6 +18,7 @@ Last updated: 2026-03-30
 - Simplified Gradle multi-project layout is replacing Aviation's included build-logic pattern while staying isolated under `java-build/`.
 - A compose-first deployment path is being wired for local deployment of the full platform baseline, including one durable Postgres instance split into separate app, Temporal, and Temporal visibility databases.
 - Compose image builds now run from the repo root through a shared multi-stage Dockerfile so `docker compose up --build` can compile the full Gradle project and package the resulting artifacts directly into each service image.
+- OPA policy bundles now live with the policy service resources instead of under a generic top-level `shared/` directory.
 - The `hello-world` workflow is being upgraded to use prompt rendering, real LLM calls, Postgres-backed history, and OPA-gated API access.
 - A separate Node.js Temporal worker now owns a standalone `helloFromNodejsWorkflow` on its own task queue.
 - The `hello-world` workflow now also carries session context into orchestration and evaluates workflow-side policy through a dedicated policy activity so business rules can live in Rego instead of only at API ingress.

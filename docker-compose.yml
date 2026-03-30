@@ -65,7 +65,7 @@ services:
     ports:
       - "${OPA_HOST_PORT:-18181}:8181"
     volumes:
-      - ./shared/policies/opa:/policies:ro
+      - ./apps/java/policy-service/src/main/resources/policies/opa:/policies:ro
 
   policy-service:
     build:
