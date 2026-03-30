@@ -1,7 +1,6 @@
 package net.mudpot.starterkit.apiservice.controllers;
 
 import io.micronaut.context.BeanProvider;
-import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;

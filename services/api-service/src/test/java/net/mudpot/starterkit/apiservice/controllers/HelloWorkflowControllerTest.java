@@ -96,9 +96,12 @@ class HelloWorkflowControllerTest {
         return new BeanProvider<>() {
             @Override
             public AnonymousSessionContext get() {
-                return new AnonymousSessionContext(
-                    new AnonymousSession("anon-session-1", "anonymous", Instant.parse("2026-03-12T00:00:00Z"), false)
-                );
+                return new AnonymousSessionContext(null) {
+                    @Override
+                    public AnonymousSession session() {
+                        return new AnonymousSession("anon-session-1", "anonymous", Instant.parse("2026-03-12T00:00:00Z"), false);
+                    }
+                };
             }
         };
     }
