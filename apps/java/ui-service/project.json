@@ -1,0 +1,29 @@
+{
+  "name": "ui-service",
+  "root": "apps/java/ui-service",
+  "sourceRoot": "apps/java/ui-service",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./java-build/gradlew -p java-build :apps:java:ui-service:build",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./java-build/gradlew -p java-build :apps:java:ui-service:test",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./java-build/gradlew -p java-build :apps:java:ui-service:lint",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "orchestration-clients",
+  "root": "libs/java/orchestration-clients",
+  "sourceRoot": "libs/java/orchestration-clients/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./java-build/gradlew -p java-build :libs:java:orchestration-clients:build",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./java-build/gradlew -p java-build :libs:java:orchestration-clients:test",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

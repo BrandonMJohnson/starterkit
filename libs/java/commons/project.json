@@ -1,0 +1,22 @@
+{
+  "name": "commons",
+  "root": "libs/java/commons",
+  "sourceRoot": "libs/java/commons/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./java-build/gradlew -p java-build :libs:java:commons:build",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./java-build/gradlew -p java-build :libs:java:commons:test",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

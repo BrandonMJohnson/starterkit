@@ -1,0 +1,74 @@
+plugins {
+    id 'base'
+}
+
+def workspaceRootDir = rootProject.rootDir.parentFile
+def resolveGitSha = {
+    try {
+        providers.exec {
+            commandLine 'git', '-C', workspaceRootDir.absolutePath, 'rev-parse', '--short=12', 'HEAD'
+        }.standardOutput.asText.get().trim()
+    } catch (Exception ignored) {
+        'dev'
+    }
+}
+def imageTag = (project.findProperty('imageTag') ?: System.getenv('IMAGE_TAG') ?: resolveGitSha()).toString()
+def registryPrefix = (project.findProperty('registryPrefix') ?: System.getenv('REGISTRY_PREFIX') ?: 'starterkit').toString()
+def imageRef = "${registryPrefix}/${project.name}:${imageTag}"
+def frontendStaticDir = layout.buildDirectory.dir('frontend-static')
+def pnpmExecutable = providers.exec {
+    commandLine 'bash', '-lc', 'command -v pnpm'
+}.standardOutput.asText.map { it.trim() }.getOrElse('pnpm')
+
+tasks.register('pnpmInstallFrontend', Exec) {
+    workingDir(workspaceRootDir)
+    commandLine(pnpmExecutable, 'install', '--frozen-lockfile', '--filter', '@starterkit/starterkit-ui...')
+}
+
+tasks.register('buildFrontendAssets', Exec) {
+    dependsOn(tasks.named('pnpmInstallFrontend'))
+    workingDir(workspaceRootDir)
+    commandLine(
+        pnpmExecutable,
+        '--filter',
+        '@starterkit/starterkit-ui',
+        'run',
+        'build',
+        '--',
+        '--outDir',
+        frontendStaticDir.get().asFile.absolutePath
+    )
+}
+
+tasks.register('lint', Exec) {
+    dependsOn(tasks.named('pnpmInstallFrontend'))
+    workingDir(workspaceRootDir)
+    commandLine(pnpmExecutable, '--filter', '@starterkit/starterkit-ui', 'run', 'lint')
+}
+
+tasks.register('test', Exec) {
+    dependsOn(tasks.named('pnpmInstallFrontend'))
+    workingDir(workspaceRootDir)
+    commandLine(pnpmExecutable, '--filter', '@starterkit/starterkit-ui', 'run', 'test', '--', '--run')
+}
+
+tasks.named('assemble') {
+    dependsOn(tasks.named('buildFrontendAssets'))
+}
+
+tasks.named('check') {
+    dependsOn(tasks.named('lint'))
+    dependsOn(tasks.named('test'))
+}
+
+tasks.register('dockerBuild', Exec) {
+    dependsOn(tasks.named('buildFrontendAssets'))
+    workingDir(workspaceRootDir)
+    commandLine('docker', 'build', '-t', imageRef, '.')
+}
+
+tasks.register('dockerPush', Exec) {
+    dependsOn(tasks.named('dockerBuild'))
+    workingDir(workspaceRootDir)
+    commandLine('docker', 'push', imageRef)
+}

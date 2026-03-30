@@ -37,7 +37,7 @@
 
 ## Persistence Pattern
 
-- Shared persistence entities and repositories live in `libraries/persistence`.
+- Shared persistence entities and repositories live in `libs/java/persistence`.
 - Schema changes land as Flyway migrations in that same library so both API and worker see the same migration set.
 - The first demo persists workflow history, not domain complexity.
 
@@ -55,7 +55,7 @@
 ## Session Pattern
 
 - StarterKit ships with anonymous sessions even though it does not ship a login system.
-- The portable `Session` value object lives in `libraries/commons`; API-only cookie, binding, and resolution mechanics stay in `api-service`.
+- The portable `Session` value object lives in `libs/java/commons`; API-only cookie, binding, and resolution mechanics stay in `api-service`.
 - `api-service` owns the session cookie and exposes `/api/session` for bootstrap.
 - Session resolution belongs at the Micronaut HTTP boundary via filter plus typed request argument binding, not as repeated controller helper logic.
 - Policy input should use session-backed actor context instead of controller-local hard-coded identities.
@@ -72,6 +72,7 @@
 - Keep `src/app-shell/` for shell composition and route-level orchestration.
 - Keep domain behavior in `src/features/<slice>/` with feature-local queries, API adapters, and UI pieces.
 - Keep shared infrastructure in `src/lib/`.
+- Keep the React app itself under `apps/node/starterkit-ui` and treat the Java `ui-service` as the static hosting boundary rather than the source-of-truth home for frontend code.
 - Put server state behind TanStack Query with shared query keys instead of ad hoc inline arrays.
 - Keep test harness helpers under `src/test/` so app-level tests do not rebuild provider setup inline.
 
@@ -85,7 +86,7 @@
 
 When a graph database becomes real work:
 
-1. Add a dedicated `libraries/graph-store` boundary instead of importing a graph driver directly into multiple services.
+1. Add a dedicated `libs/java/graph-store` boundary instead of importing a graph driver directly into multiple services.
 2. Decide whether the graph is:
    - read-optimized query infrastructure
    - orchestration-side relationship storage

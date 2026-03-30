@@ -1,0 +1,22 @@
+{
+  "name": "orchestration",
+  "root": "apps/java/orchestration",
+  "sourceRoot": "apps/java/orchestration/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./java-build/gradlew -p java-build :apps:java:orchestration:build",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./java-build/gradlew -p java-build :apps:java:orchestration:test",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

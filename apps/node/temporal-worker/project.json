@@ -1,0 +1,43 @@
+{
+  "name": "node-temporal-worker",
+  "root": "apps/node/temporal-worker",
+  "sourceRoot": "apps/node/temporal-worker/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @starterkit/node-temporal-worker build",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @starterkit/node-temporal-worker test",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @starterkit/node-temporal-worker lint",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "worker": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @starterkit/node-temporal-worker worker",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "start-workflow": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @starterkit/node-temporal-worker start-workflow",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

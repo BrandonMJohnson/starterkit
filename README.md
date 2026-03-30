@@ -4,6 +4,7 @@ StarterKit is a reusable full-stack baseline for building domain-specific produc
 
 - a Micronaut API boundary
 - Temporal-backed orchestration
+- a standalone Node.js Temporal worker
 - PostgreSQL persistence
 - Valkey caching
 - OpenTelemetry tracing with Jaeger
@@ -35,19 +36,19 @@ Point Codex at this repo and start with the business problem, not the implementa
 
 ```text
 StarterKit/
+  apps/
+    java/
+    node/
+  libs/
+    java/
+    node/
+  contracts/
+  generated/
+  java-build/
   docs/
     status.md
     patterns.md
     interviews/
-  libraries/
-    commons/
-    orchestration-clients/
-    persistence/
-  services/
-    api-service/
-    orchestration/
-    policy-service/
-    ui-service/
   shared/
     policies/opa/
 ```
@@ -55,7 +56,14 @@ StarterKit/
 ## Quick Start
 
 1. Copy `.env.example` to `.env` and set the LLM values that match your local setup.
-2. Start the local stack:
+2. Enable the repo-managed Node toolchain and install workspace dependencies:
+
+```bash
+corepack enable
+pnpm install
+```
+
+3. Start the local stack:
 
 ```bash
 docker compose up --build
@@ -63,9 +71,9 @@ docker compose up --build
 
 This path now uses a root multi-stage Docker build, so Compose compiles the full Gradle project and the UI assets before assembling the runtime images.
 
-The default local `ui-service` path also mounts `services/ui-service/build/frontend-static` as an overlay when that directory contains a host build, so frontend watch output can take over without replacing the clean-checkout fallback baked into the image.
+The default local `ui-service` path also mounts `apps/java/ui-service/build/frontend-static` as an overlay when that directory contains a host build, so frontend watch output can take over without replacing the clean-checkout fallback baked into the image.
 
-3. Open:
+4. Open:
 
 - UI shell: [http://localhost:18090](http://localhost:18090)
 - API health: [http://localhost:18080/api/healthz](http://localhost:18080/api/healthz)
@@ -79,20 +87,35 @@ The compose host ports are configurable through `.env` if those defaults still c
 - Java services:
 
 ```bash
-./gradlew :services:api-service:run
-./gradlew :services:orchestration:run
-./gradlew :services:policy-service:run
+./java-build/gradlew -p java-build :apps:java:api-service:run
+./java-build/gradlew -p java-build :apps:java:orchestration:run
+./java-build/gradlew -p java-build :apps:java:policy-service:run
+```
+
+- Root workspace tasks:
+
+```bash
+pnpm build
+pnpm test
+pnpm lint
 ```
 
 - Frontend dev server:
 
 ```bash
-cd services/ui-service/frontend
-npm install
-npm run dev
+pnpm --filter @starterkit/starterkit-ui dev
 ```
 
 The Vite dev server proxies `/api` to `http://localhost:8080`.
+
+- Node Temporal worker:
+
+```bash
+pnpm --filter @starterkit/node-temporal-worker worker
+pnpm --filter @starterkit/node-temporal-worker start-workflow
+```
+
+The standalone worker listens on `hello-from-nodejs-task-queue` by default and starts the `helloFromNodejsWorkflow`.
 
 - Frontend validation through the compose-managed `nginx` container:
 
@@ -105,15 +128,13 @@ In this mode, `ui-service` serves baked image assets until a host frontend build
 - Fast UI iteration with the default compose overlay:
 
 ```bash
-./gradlew :services:ui-service:buildFrontendAssets
+./java-build/gradlew -p java-build :apps:java:ui-service:buildFrontendAssets
 docker compose up --build ui-service api-service orchestration policy-service
 
-cd services/ui-service/frontend
-npm install
-npm run build:watch
+pnpm --filter @starterkit/starterkit-ui build:watch
 ```
 
-This keeps the containerized `nginx` path, but the mounted `services/ui-service/build/frontend-static` directory takes over as soon as it contains a frontend build so browser refreshes pick up rebuilds without rebuilding the image.
+This keeps the containerized `nginx` path, but the mounted `apps/java/ui-service/build/frontend-static` directory takes over as soon as it contains a frontend build so browser refreshes pick up rebuilds without rebuilding the image.
 
 ## Deployment Model
 
@@ -126,7 +147,7 @@ The Compose baseline intentionally keeps a single persistent Postgres server whi
 This baseline does not hard-wire a graph database yet, but it does reserve the seam:
 
 - `graph.*` config exists in API and orchestration
-- `docs/patterns.md` documents where a future `libraries/graph-store` boundary should sit
+- `docs/patterns.md` documents where a future `libs/java/graph-store` boundary should sit
 - domain discovery should decide whether the graph belongs on the query path, orchestration side effects, or both before code is added
 
 ## Docs

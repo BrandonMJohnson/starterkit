@@ -168,9 +168,21 @@ services:
       UI_PUBLIC_TEMPORAL_UI_URL: http://localhost:${TEMPORAL_UI_HOST_PORT:-18233}
       UI_PUBLIC_JAEGER_URL: http://localhost:${JAEGER_UI_HOST_PORT:-18686}
     volumes:
-      - ./services/ui-service/build/frontend-static:/var/run/starterkit-ui-overlay:ro
+      - ./apps/java/ui-service/build/frontend-static:/var/run/starterkit-ui-overlay:ro
     ports:
       - "${UI_SERVICE_HOST_PORT:-18090}:8090"
+
+  nodejs-temporal-worker:
+    build:
+      context: .
+      dockerfile: apps/node/temporal-worker/Dockerfile
+    depends_on:
+      temporal:
+        condition: service_started
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: ${TEMPORAL_NAMESPACE:-default}
+      TEMPORAL_TASK_QUEUE: ${NODEJS_TEMPORAL_TASK_QUEUE:-hello-from-nodejs-task-queue}
 
 volumes:
   postgres-data:
