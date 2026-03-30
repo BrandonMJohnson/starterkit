@@ -44,7 +44,6 @@ StarterKit/
     java/
     node/
   contracts/
-  generated/
   java-build/
   docs/
     status.md
