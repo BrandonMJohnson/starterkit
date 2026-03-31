@@ -65,7 +65,7 @@ services:
     ports:
       - "${OPA_HOST_PORT:-18181}:8181"
     volumes:
-      - ../../apps/java/policy-service/src/main/resources/policies/opa:/policies:ro
+      - ../../services/java/policy-service/src/main/resources/policies/opa:/policies:ro
 
   policy-service:
     build:
@@ -168,7 +168,7 @@ services:
       UI_PUBLIC_TEMPORAL_UI_URL: http://localhost:${TEMPORAL_UI_HOST_PORT:-18233}
       UI_PUBLIC_JAEGER_URL: http://localhost:${JAEGER_UI_HOST_PORT:-18686}
     volumes:
-      - ../../apps/platform/ui-service/build/frontend-static:/var/run/starterkit-ui-overlay:ro
+      - ../../services/platform/ui-service/build/frontend-static:/var/run/starterkit-ui-overlay:ro
     ports:
       - "${UI_SERVICE_HOST_PORT:-18090}:8090"
 

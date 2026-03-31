@@ -24,9 +24,9 @@ subprojects {
 
 tasks.register("dockerBuild") {
     dependsOn(
-        ":apps:java:api-service:dockerBuild",
-        ":apps:java:orchestration:dockerBuild",
-        ":apps:java:policy-service:dockerBuild",
-        ":apps:platform:ui-service:dockerBuild"
+        ":services:java:api-service:dockerBuild",
+        ":services:java:orchestration:dockerBuild",
+        ":services:java:policy-service:dockerBuild",
+        ":services:platform:ui-service:dockerBuild"
     )
 }

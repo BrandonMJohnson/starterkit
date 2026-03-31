@@ -14,7 +14,7 @@ Last updated: 2026-03-30
 
 ## In Progress
 
-- Repo layout is moving from `services/` and `libraries/` into `apps/` and `libs/` so the root clearly reads as an Nx workspace.
+- Repo layout now uses `services/` and `libs/` as the main code boundaries so the root stays easy to scan.
 - Simplified Gradle multi-project layout is replacing Aviation's included build-logic pattern while staying isolated under `java-build/`.
 - A compose-first deployment path is being wired for local deployment of the full platform baseline, including one durable Postgres instance split into separate app, Temporal, and Temporal visibility databases.
 - Compose image builds now run from `infra/` through shared Docker entrypoints so `docker compose -f infra/local/docker-compose.yml up --build` can compile the full Gradle project and package the resulting runtime images directly from the workspace root.
@@ -24,7 +24,7 @@ Last updated: 2026-03-30
 - The `hello-world` workflow now also carries session context into orchestration and evaluates workflow-side policy through a dedicated policy activity so business rules can live in Rego instead of only at API ingress.
 - API requests now bootstrap through a signed session cookie and `/api/session`, and policy input uses session context instead of a fixed builder actor.
 - Recovered API policy enforcement is moving back toward a reusable Micronaut-native boundary with controller annotations, an HTTP filter, and typed session parameter injection.
-- Recovered frontend structure now lives in the pnpm workspace under `apps/node/starterkit-ui` while `apps/platform/ui-service` remains the static host boundary.
+- Recovered frontend structure now lives in the pnpm workspace under `services/node/starterkit-ui` while `services/platform/ui-service` remains the static host boundary.
 - The default local UI path now combines baked frontend assets with a host-mounted overlay fallback so clean checkouts still boot while `build:watch` can take over immediately once frontend assets exist on disk.
 - Repo guidance is being rewritten so Codex starts with a short business-domain interview when the domain is not yet defined.
 

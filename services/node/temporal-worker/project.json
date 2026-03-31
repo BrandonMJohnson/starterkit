@@ -1,7 +1,7 @@
 {
   "name": "node-temporal-worker",
-  "root": "apps/node/temporal-worker",
-  "sourceRoot": "apps/node/temporal-worker/src",
+  "root": "services/node/temporal-worker",
+  "sourceRoot": "services/node/temporal-worker/src",
   "projectType": "application",
   "targets": {
     "build": {

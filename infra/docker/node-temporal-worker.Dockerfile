@@ -5,12 +5,12 @@ RUN corepack enable
 WORKDIR /workspace
 
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml nx.json tsconfig.base.json ./
-COPY apps/node/starterkit-ui/package.json ./apps/node/starterkit-ui/package.json
-COPY apps/node/temporal-worker/package.json ./apps/node/temporal-worker/package.json
+COPY services/node/starterkit-ui/package.json ./services/node/starterkit-ui/package.json
+COPY services/node/temporal-worker/package.json ./services/node/temporal-worker/package.json
 
 RUN pnpm install --frozen-lockfile --filter @starterkit/node-temporal-worker...
 
-COPY apps/node ./apps/node
+COPY services/node ./services/node
 
 RUN pnpm --filter @starterkit/node-temporal-worker build
 

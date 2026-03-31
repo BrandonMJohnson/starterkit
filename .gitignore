@@ -4,11 +4,11 @@ out/
 .idea/
 .DS_Store
 node_modules/
-apps/node/*/node_modules/
-apps/node/*/dist/
-apps/node/*/coverage/
-apps/node/*/playwright-report/
-apps/node/*/test-results/
+services/node/*/node_modules/
+services/node/*/dist/
+services/node/*/coverage/
+services/node/*/playwright-report/
+services/node/*/test-results/
 .nx/
 .env
 

@@ -36,7 +36,7 @@ Point Codex at this repo and start with the business problem, not the implementa
 
 ```text
 StarterKit/
-  apps/
+  services/
     java/
     node/
     platform/
@@ -70,7 +70,7 @@ docker compose -f infra/local/docker-compose.yml up --build
 
 This path now uses the shared Docker build definitions under `infra/docker/`, so Compose compiles the full Gradle project and the UI assets before assembling the runtime images.
 
-The default local `ui-service` host path also mounts `apps/platform/ui-service/build/frontend-static` as an overlay when that directory contains a host build, so frontend watch output can take over without replacing the clean-checkout fallback baked into the image.
+The default local `ui-service` host path also mounts `services/platform/ui-service/build/frontend-static` as an overlay when that directory contains a host build, so frontend watch output can take over without replacing the clean-checkout fallback baked into the image.
 
 4. Open:
 
@@ -86,10 +86,10 @@ The compose host ports are configurable through `.env` if those defaults still c
 - Java services:
 
 ```bash
-./java-build/gradlew -p java-build :apps:java:api-service:run
-./java-build/gradlew -p java-build :apps:java:orchestration:run
-./java-build/gradlew -p java-build :apps:java:policy-service:run
-./java-build/gradlew -p java-build :apps:platform:ui-service:buildFrontendAssets
+./java-build/gradlew -p java-build :services:java:api-service:run
+./java-build/gradlew -p java-build :services:java:orchestration:run
+./java-build/gradlew -p java-build :services:java:policy-service:run
+./java-build/gradlew -p java-build :services:platform:ui-service:buildFrontendAssets
 ```
 
 - Root workspace tasks:
@@ -128,13 +128,13 @@ In this mode, `ui-service` serves baked image assets until a host frontend build
 - Fast UI iteration with the default compose overlay:
 
 ```bash
-./java-build/gradlew -p java-build :apps:platform:ui-service:buildFrontendAssets
+./java-build/gradlew -p java-build :services:platform:ui-service:buildFrontendAssets
 docker compose -f infra/local/docker-compose.yml up --build ui-service api-service orchestration policy-service
 
 pnpm --filter @starterkit/starterkit-ui build:watch
 ```
 
-This keeps the containerized `nginx` path, but the mounted `apps/platform/ui-service/build/frontend-static` directory takes over as soon as it contains a frontend build so browser refreshes pick up rebuilds without rebuilding the image.
+This keeps the containerized `nginx` path, but the mounted `services/platform/ui-service/build/frontend-static` directory takes over as soon as it contains a frontend build so browser refreshes pick up rebuilds without rebuilding the image.
 
 ## Deployment Model
 

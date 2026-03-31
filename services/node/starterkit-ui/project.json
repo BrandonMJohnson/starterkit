@@ -1,7 +1,7 @@
 {
   "name": "starterkit-ui",
-  "root": "apps/node/starterkit-ui",
-  "sourceRoot": "apps/node/starterkit-ui/src",
+  "root": "services/node/starterkit-ui",
+  "sourceRoot": "services/node/starterkit-ui/src",
   "projectType": "application",
   "targets": {
     "build": {

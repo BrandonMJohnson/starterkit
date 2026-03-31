@@ -1,20 +1,20 @@
 {
   "name": "api-service",
-  "root": "apps/java/api-service",
-  "sourceRoot": "apps/java/api-service/src",
+  "root": "services/java/api-service",
+  "sourceRoot": "services/java/api-service/src",
   "projectType": "application",
   "targets": {
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./java-build/gradlew -p java-build :apps:java:api-service:build",
+        "command": "./java-build/gradlew -p java-build :services:java:api-service:build",
         "cwd": "{workspaceRoot}"
       }
     },
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./java-build/gradlew -p java-build :apps:java:api-service:test",
+        "command": "./java-build/gradlew -p java-build :services:java:api-service:test",
         "cwd": "{workspaceRoot}"
       }
     }

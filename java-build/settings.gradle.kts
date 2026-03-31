@@ -11,14 +11,14 @@ pluginManagement {
 
 rootProject.name = "starterkit-java-build"
 
-include(":apps")
-project(":apps").projectDir = file("../apps")
+include(":services")
+project(":services").projectDir = file("../services")
 
-include(":apps:java")
-project(":apps:java").projectDir = file("../apps/java")
+include(":services:java")
+project(":services:java").projectDir = file("../services/java")
 
-include(":apps:platform")
-project(":apps:platform").projectDir = file("../apps/platform")
+include(":services:platform")
+project(":services:platform").projectDir = file("../services/platform")
 
 include(":libs")
 project(":libs").projectDir = file("../libs")
@@ -35,14 +35,14 @@ project(":libs:java:persistence").projectDir = file("../libs/java/persistence")
 include(":libs:java:orchestration-clients")
 project(":libs:java:orchestration-clients").projectDir = file("../libs/java/orchestration-clients")
 
-include(":apps:java:api-service")
-project(":apps:java:api-service").projectDir = file("../apps/java/api-service")
+include(":services:java:api-service")
+project(":services:java:api-service").projectDir = file("../services/java/api-service")
 
-include(":apps:java:orchestration")
-project(":apps:java:orchestration").projectDir = file("../apps/java/orchestration")
+include(":services:java:orchestration")
+project(":services:java:orchestration").projectDir = file("../services/java/orchestration")
 
-include(":apps:java:policy-service")
-project(":apps:java:policy-service").projectDir = file("../apps/java/policy-service")
+include(":services:java:policy-service")
+project(":services:java:policy-service").projectDir = file("../services/java/policy-service")
 
-include(":apps:platform:ui-service")
-project(":apps:platform:ui-service").projectDir = file("../apps/platform/ui-service")
+include(":services:platform:ui-service")
+project(":services:platform:ui-service").projectDir = file("../services/platform/ui-service")
