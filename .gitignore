@@ -14,3 +14,7 @@ apps/node/*/test-results/
 
 .claude/worktrees
 .claude/settings.local.json
+.opencode/node_modules/
+.opencode/package.json
+.opencode/bun.lock
+.opencode/.gitignore
