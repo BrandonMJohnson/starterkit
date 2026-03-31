@@ -11,3 +11,6 @@ apps/node/*/playwright-report/
 apps/node/*/test-results/
 .nx/
 .env
+
+.claude/worktrees
+.claude/settings.local.json
